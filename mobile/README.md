@@ -1,10 +1,10 @@
-# TriageFlow AI — Mobile App
+# TriageFlow AI — Mobile App (Member 2 Handoff)
 
-Flutter mobile UI for the Patient Triage Agent prototype.
+Flutter mobile UI skeleton for the Patient Triage Agent prototype. 
 
-## Safety Note
-
-This app uses synthetic data only. Every triage result must be confirmed by a licensed clinician. This is not a diagnosis or treatment system.
+> [!IMPORTANT]
+> **Phase 2 Status:** The UI has been reset to a minimal "Phase 0" state to allow Member 2 to implement the production-grade UI from scratch. 
+> **Phases 0, 1, & 3 are COMPLETE.** Do not modify the data models or backend logic.
 
 ## Setup
 
@@ -14,39 +14,29 @@ flutter pub get
 flutter run
 ```
 
-## Screens
+## Available Data Models (Phase 1)
 
-| Screen | Route | Description |
-|--------|-------|-------------|
-| HomeScreen | `/` | Dashboard with demo cases and quick actions |
-| PatientIntakeScreen | `/intake` | New patient intake form |
-| TriageResultScreen | `/result` | Priority, risk, red flags, reasoning |
-| ContradictionScreen | `/contradictions` | Detected contradictions |
-| ActionChainScreen | `/actions` | Action timeline, execution logs, outcomes |
-| QueueDashboardScreen | `/queue` | Waiting queue and resource status |
-| LogsScreen | `/logs` | Execution and audit logs |
+The following models are ready in `lib/models/` and align with the Backend API:
+- `PatientCase`: Core patient data and vitals.
+- `TriageResult`: Scored priority, risk, and red flags.
+- `ActionStep`: Next-step clinical workflows.
 
-## Widgets
+## Handoff Tasks for Member 2 (Phase 2)
 
-- `PriorityBadge` — Color-coded priority level badge
-- `SafetyBanner` — Clinical safety disclaimer
-- `VitalsInputCard` — Vital signs input form
-- `SymptomChipSelector` — Multi-select symptom chips
-- `RiskScoreCard` — Circular gauge with confidence bar
-- `RedFlagList` — Triggered red-flag rules
-- `ContradictionCard` — Contradiction detail with resolution
-- `ActionTimeline` — Vertical action chain timeline
-- `OutcomeMetricCard` — Before/after queue and resource outcomes
-- `ExecutionLogTimeline` — Timestamped execution log timeline
+1. **Rebuild UI:** Implement the hospital-grade dashboard, intake form, and result screens.
+2. **Theming:** Use the established design system (dark mode, high contrast).
+3. **API Integration:** Connect the UI to the FastAPI backend (Phase 3).
 
-## Architecture
+## Architecture Overview
 
-- **Theme**: `lib/theme/app_theme.dart` — Dark theme with 5-level priority color system
-- **Models**: `lib/models/` — Dart models matching backend Pydantic contracts
-- **Mock Data**: `lib/data/mock_data.dart` — All synthetic data for offline development
-- **Screens**: `lib/screens/` — 7 complete screens
-- **Widgets**: `lib/widgets/` — 10 reusable components
+- **Models**: `lib/models/` — Dart models matching backend Pydantic contracts. **(PRESERVED - Phase 1)**
+- **Screens**: `lib/screens/` — To be implemented by Member 2. **(RESET - Phase 2)**
+- **Widgets**: `lib/widgets/` — To be implemented by Member 2. **(RESET - Phase 2)**
 
-## Backend Integration (Phase 6)
+## Safety Note
 
-Replace `MockDataService` calls with HTTP requests to the FastAPI backend. The Dart models use the same field names as the API contract in `docs/api_contract.md`.
+This app uses synthetic data only. Every triage result must be confirmed by a licensed clinician. This is not a diagnosis or treatment system.
+
+## Backend Integration
+
+The backend is 100% functional (Phase 3). You can view the API contract in `docs/api_contract.md`. The Dart models are already mapped to match these JSON responses.

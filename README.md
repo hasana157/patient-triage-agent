@@ -6,72 +6,57 @@ TriageFlow AI is a mobile-first emergency department triage decision-support pro
 
 This project is not a diagnosis tool, not a treatment recommendation system, and not for real clinical deployment. It uses synthetic data only. Every result must be confirmed by licensed clinical staff, and clinicians can override the suggested priority.
 
-## Current Phase
+## Project Status
 
-- Phase 00: Setup and Antigravity safety foundation.
-- Phase 01: Requirements, architecture, data contracts, and synthetic data.
+- **Phase 00:** Setup and Antigravity safety foundation. **(COMPLETE)**
+- **Phase 01:** Requirements, architecture, data contracts. **(COMPLETE)**
+- **Phase 02:** Flutter UI Implementation. **(RESET - To be rebuilt by Member 2)**
+- **Phase 03:** Backend API & Triage Engine (Deterministic). **(COMPLETE)**
 
 ## Architecture
 
-- Flutter mobile app in `mobile/` for the nurse/doctor workflow.
-- FastAPI backend in `backend/` for deterministic triage logic and agentic workflow endpoints.
+- Flutter mobile app in `mobile/`. **(Phase 2 Skeleton)**
+- FastAPI backend in `backend/` for deterministic triage logic and agentic workflow endpoints. **(Phase 3 Complete)**
 - JSON/CSV mock data in `backend/app/data/`.
 - Safety and Antigravity rules in `.agent/rules/`.
 - Architecture and API contract docs in `docs/`.
 
 See [docs/architecture.md](docs/architecture.md) and [docs/api_contract.md](docs/api_contract.md).
 
-## Backend Setup
+## Backend Setup & Testing
 
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
 python -m pip install -r backend\requirements.txt
+
+# Run server
 python -m uvicorn app.main:app --app-dir backend --reload
-```
 
-Health check:
-
-```powershell
-Invoke-RestMethod http://127.0.0.1:8000/health
-```
-
-Run foundation tests:
-
-```powershell
+# Run all tests (Foundation + Triage Engine)
 $env:PYTHONPATH='backend'
 .\.venv\Scripts\python -m pytest backend
 ```
 
-## Mobile Setup
+## Mobile Handoff (Phase 2)
 
-Flutter was not found on this workstation during Phase 00. After Flutter is installed and available on `PATH`, use:
+The Flutter UI has been reset to a minimal state. **Member 2** should implement the production-grade dashboard and triage workflow screens using the models in `mobile/lib/models/`.
 
-```powershell
-cd mobile
-flutter pub get
-flutter run
-```
+## API Status
 
-Phase 02 should create the Flutter screens using the contract and synthetic mock data already defined here.
+Implemented in Phase 3:
 
-## API Contract Summary
+- `GET /health` — Service health and phase status.
+- `GET /api/demo/cases` — List all 6 synthetic demo cases.
+- `POST /api/triage/evaluate` — Deterministic evaluation (Risk, Priority, Reasoning).
+- `GET /api/queue` — Sorted triage queue.
 
-Implemented now:
+Planned for future phases:
 
-- `GET /health` returns backend service status.
-
-Planned for Phase 03 and later:
-
-- `GET /api/demo/cases`
-- `GET /api/queue`
-- `POST /api/triage/evaluate`
-- `POST /api/actions/plan`
-- `POST /api/actions/execute`
-- `GET /api/outcome`
-- `GET /api/logs`
-- `POST /api/demo/run-full`
+- `POST /api/actions/plan` — Generate clinical action chains.
+- `POST /api/actions/execute` — Simulate execution and recovery.
+- `GET /api/outcome` — Before/after metric simulation.
+- `GET /api/logs` — Comprehensive audit trails.
 
 The canonical request and response examples are documented in [docs/api_contract.md](docs/api_contract.md).
 
