@@ -1,0 +1,7 @@
+case_id,patient_code,arrival_time,current_wait_minutes,current_queue_position,current_priority,chief_complaint
+CASE-010,PT-010,2026-05-13T17:55:00+05:00,75,1,YELLOW,abdominal pain
+CASE-011,PT-011,2026-05-13T18:05:00+05:00,65,2,GREEN,mild ankle sprain
+CASE-012,PT-012,2026-05-13T18:15:00+05:00,55,3,YELLOW,moderate asthma symptoms
+CASE-013,PT-013,2026-05-13T18:45:00+05:00,25,4,BLUE,prescription refill request
+CASE-014,PT-014,2026-05-13T18:55:00+05:00,15,5,GREEN,minor cut
+

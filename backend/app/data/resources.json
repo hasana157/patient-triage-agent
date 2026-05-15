@@ -1,0 +1,42 @@
+{
+  "generated_at": "2026-05-13T19:10:00+05:00",
+  "facility": "Mock City Hospital Emergency Department",
+  "data_mode": "synthetic_demo",
+  "clinicians": [
+    {
+      "role": "emergency_doctor",
+      "available": 1,
+      "busy": 2
+    },
+    {
+      "role": "triage_nurse",
+      "available": 2,
+      "busy": 1
+    },
+    {
+      "role": "senior_nurse",
+      "available": 1,
+      "busy": 0
+    }
+  ],
+  "beds": {
+    "resuscitation": 1,
+    "acute": 2,
+    "observation": 3,
+    "fast_track": 4
+  },
+  "equipment": {
+    "oxygen_ports": 2,
+    "ecg_machines": 1,
+    "monitors": 2,
+    "wheelchairs": 3
+  },
+  "constraints": {
+    "red_alert_deadline_minutes": 1,
+    "orange_alert_deadline_minutes": 5,
+    "yellow_reassessment_minutes": 30,
+    "max_retry_attempts": 1,
+    "force_first_doctor_alert_failure": true
+  }
+}
+
