@@ -1,78 +1,53 @@
 # Patient Triage Agent / TriageFlow AI
 
-TriageFlow AI is a mobile-first emergency department triage decision-support prototype. It converts synthetic patient intake data into a prototype triage priority, reasoning, missing-data and contradiction warnings, recommended action chains, simulated execution logs, and outcome metrics.
+## Problem
+Emergency departments face overcrowding and manual triage pressure, risking delayed identification of critical conditions.
+
+## Solution
+A mobile-first, agentic triage decision-support prototype. It turns patient inputs into explainable urgency levels and connected action chains.
+
+## Contributors
+- **Member 1**: Backend, triage engine, action planner, constraints, backend QA, Antigravity artifacts
+- **Member 2**: Flutter UI, evidence pipeline, execution simulator, recovery, Flutter QA, demo script
 
 ## Safety Note
-
-This project is not a diagnosis tool, not a treatment recommendation system, and not for real clinical deployment. It uses synthetic data only. Every result must be confirmed by licensed clinical staff, and clinicians can override the suggested priority.
-
-## Project Status
-
-- **Phase 00:** Setup and Antigravity safety foundation. **(COMPLETE)**
-- **Phase 01:** Requirements, architecture, data contracts. **(COMPLETE)**
-- **Phase 02:** Flutter UI Implementation. **(RESET - To be rebuilt by Member 2)**
-- **Phase 03:** Backend API & Triage Engine (Deterministic). **(COMPLETE)**
+This is not a diagnosis tool and not for real clinical deployment. It is an agentic AI decision-support prototype.
 
 ## Architecture
+- **Flutter**: Mobile frontend dashboard.
+- **FastAPI**: Backend service.
+- **Deterministic Triage Engine**: Rules-based urgency identification (no LLMs in the critical path).
+- **Agentic Workflow**:
+  - Planners generate multi-step action chains.
+  - Constraint checkers validate resources.
+  - Executors act on the environment.
+  - Recovery mechanisms self-correct failures (e.g. retry/fallback).
 
-- Flutter mobile app in `mobile/`. **(Phase 2 Skeleton)**
-- FastAPI backend in `backend/` for deterministic triage logic and agentic workflow endpoints. **(Phase 3 Complete)**
-- JSON/CSV mock data in `backend/app/data/`.
-- Safety and Antigravity rules in `.agent/rules/`.
-- Architecture and API contract docs in `docs/`.
+## How to Run
 
-See [docs/architecture.md](docs/architecture.md) and [docs/api_contract.md](docs/api_contract.md).
-
-## Backend Setup & Testing
-
+### Backend
 ```powershell
+cd backend
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
-python -m pip install -r backend\requirements.txt
-
-# Run server
-python -m uvicorn app.main:app --app-dir backend --reload
-
-# Run all tests (Foundation + Triage Engine)
-$env:PYTHONPATH='backend'
-.\.venv\Scripts\python -m pytest backend
+pip install -r requirements.txt
+uvicorn app.main:app --reload
 ```
 
-## Mobile Handoff (Phase 2)
-
-The Flutter UI has been reset to a minimal state. **Member 2** should implement the production-grade dashboard and triage workflow screens using the models in `mobile/lib/models/`.
-
-## API Status
-
-Implemented in Phase 3:
-
-- `GET /health` — Service health and phase status.
-- `GET /api/demo/cases` — List all 6 synthetic demo cases.
-- `POST /api/triage/evaluate` — Deterministic evaluation (Risk, Priority, Reasoning).
-- `GET /api/queue` — Sorted triage queue.
-
-Planned for future phases:
-
-- `POST /api/actions/plan` — Generate clinical action chains.
-- `POST /api/actions/execute` — Simulate execution and recovery.
-- `GET /api/outcome` — Before/after metric simulation.
-- `GET /api/logs` — Comprehensive audit trails.
-
-The canonical request and response examples are documented in [docs/api_contract.md](docs/api_contract.md).
+### Mobile
+```powershell
+cd mobile
+flutter pub get
+flutter run -d chrome
+```
 
 ## Demo Flow
-
-1. Select or enter a synthetic patient case.
-2. Evaluate triage priority with transparent reasoning.
-3. Surface missing data and contradictions.
-4. Generate 3 to 5 connected operational actions.
-5. Simulate execution, including alert failure and recovery.
-6. Show before/after queue and resource outcomes.
+1. Patient input (Vitals, Symptoms).
+2. Triage engine evaluates risk.
+3. Missing data or contradictions trigger safety actions.
+4. Planner generates an action chain (e.g., Alert Doctor -> Allocate Bed).
+5. Simulator attempts execution, handles failures (e.g., fallback to SMS).
+6. Outcome metrics are displayed.
 
 ## Limitations
-
-- Simplified, ESI-inspired prototype rules only.
-- No clinical validation.
-- No real patient data.
-- No EHR integration.
-- Deterministic rules should decide priority; any LLM layer must be explanation-only.
+Synthetic data only, simplified rules, not clinically validated. See `docs/limitations.md`.
