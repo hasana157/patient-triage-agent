@@ -126,76 +126,78 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text('TriageFlow AI')),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Column(
-            children: [
-              const SizedBox(height: 48),
-              // App icon
-              Container(
-                width: 72,
-                height: 72,
-                decoration: BoxDecoration(
-                  color: AppTheme.blue.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(20),
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Column(
+              children: [
+                const SizedBox(height: 48),
+                // App icon
+                Container(
+                  width: 72,
+                  height: 72,
+                  decoration: BoxDecoration(
+                    color: AppTheme.blue.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: const Icon(Icons.health_and_safety,
+                      size: 40, color: AppTheme.blue),
                 ),
-                child: const Icon(Icons.health_and_safety,
-                    size: 40, color: AppTheme.blue),
-              ),
-              const SizedBox(height: 20),
-              Text(
-                'TriageFlow AI',
-                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                      color: AppTheme.primaryText,
-                    ),
-              ),
-              const SizedBox(height: 6),
-              const Text(
-                'Clinical Decision Support Prototype',
-                style: TextStyle(fontSize: 14, color: AppTheme.secondaryText),
-              ),
-              const SizedBox(height: 16),
-              // Safety disclaimer
-              AppTheme.buildSafetyBanner(),
-              const SizedBox(height: 24),
-              // Action buttons
-              _ActionButton(
-                icon: Icons.play_circle_outline,
-                label: 'Run Demo',
-                subtitle: 'Evaluate CASE-001 end-to-end',
-                color: AppTheme.primaryAction,
-                loading: _demoLoading,
-                onTap: _demoLoading ? null : _runDemo,
-              ),
-              const SizedBox(height: 12),
-              _ActionButton(
-                icon: Icons.person_add_outlined,
-                label: 'New Patient',
-                subtitle: 'Enter patient data for triage',
-                color: AppTheme.primaryAction,
-                onTap: () => Navigator.pushNamed(context, '/intake'),
-              ),
-              const SizedBox(height: 12),
-              _ActionButton(
-                icon: Icons.dashboard_outlined,
-                label: 'Queue Dashboard',
-                subtitle: 'View live priority queue',
-                color: AppTheme.primaryAction,
-                isOutlined: true,
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (_) => const QueueDashboardScreen()),
+                const SizedBox(height: 20),
+                Text(
+                  'TriageFlow AI',
+                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: AppTheme.primaryText,
+                      ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'Synthetic data only · Hackathon prototype',
-                style: TextStyle(fontSize: 11, color: AppTheme.captionText),
-              ),
-              const SizedBox(height: 16),
-            ],
+                const SizedBox(height: 6),
+                const Text(
+                  'Clinical Decision Support Prototype',
+                  style: TextStyle(fontSize: 14, color: AppTheme.secondaryText),
+                ),
+                const SizedBox(height: 16),
+                // Safety disclaimer
+                AppTheme.buildSafetyBanner(),
+                const SizedBox(height: 24),
+                // Action buttons
+                _ActionButton(
+                  icon: Icons.play_circle_outline,
+                  label: 'Run Demo',
+                  subtitle: 'Evaluate CASE-001 end-to-end',
+                  color: AppTheme.primaryAction,
+                  loading: _demoLoading,
+                  onTap: _demoLoading ? null : _runDemo,
+                ),
+                const SizedBox(height: 12),
+                _ActionButton(
+                  icon: Icons.person_add_outlined,
+                  label: 'New Patient',
+                  subtitle: 'Enter patient data for triage',
+                  color: AppTheme.primaryAction,
+                  onTap: () => Navigator.pushNamed(context, '/intake'),
+                ),
+                const SizedBox(height: 12),
+                _ActionButton(
+                  icon: Icons.dashboard_outlined,
+                  label: 'Queue Dashboard',
+                  subtitle: 'View live priority queue',
+                  color: AppTheme.primaryAction,
+                  isOutlined: true,
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (_) => const QueueDashboardScreen()),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Synthetic data only · Hackathon prototype',
+                  style: TextStyle(fontSize: 11, color: AppTheme.captionText),
+                ),
+                const SizedBox(height: 16),
+              ],
+            ),
           ),
         ),
       ),

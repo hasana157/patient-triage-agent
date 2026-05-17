@@ -63,37 +63,21 @@ class ApiService {
   // STUB ENDPOINTS
   // ---------------------------------------------------------------------------
 
-  // STUB — replace in Phase 6B when backend endpoint is live
-  /// Returns a mock action plan for the given case and priority.
-  Future<List<ActionStep>> getActionPlan(
-    String caseId,
-    String priorityLevel,
-  ) async {
-    await Future.delayed(const Duration(milliseconds: 300));
-
-    final int stepCount;
-    if (priorityLevel == 'RED' || priorityLevel == 'ORANGE') {
-      stepCount = 5;
-    } else if (priorityLevel == 'YELLOW') {
-      stepCount = 3;
-    } else {
-      stepCount = 1;
+  /// Returns a live action plan from the backend for the given triage result.
+  Future<List<ActionStep>> getActionPlan(TriageResult triageResult) async {
+    try {
+      final body = _triageResultToJson(triageResult);
+      final response = await http
+          .post(
+            Uri.parse('$_baseUrl/api/actions/plan'),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode(body),
+          )
+          .timeout(_timeout);
+      return _handleListResponse(response, ActionStep.fromJson);
+    } catch (e) {
+      throw _friendlyError('Action planning failed', e);
     }
-
-    return List.generate(stepCount, (i) {
-      return ActionStep(
-        actionId: 'ACT-$caseId-${i + 1}',
-        caseId: caseId,
-        sequence: i + 1,
-        actionType: _mockActionTypes[i % _mockActionTypes.length],
-        title: _mockActionTitles[i % _mockActionTitles.length],
-        description: _mockActionDescriptions[i % _mockActionDescriptions.length],
-        status: 'planned',
-        targetRole: _mockTargetRoles[i % _mockTargetRoles.length],
-        deadlineMinutes: (i + 1) * 5,
-        clinicianConfirmationRequired: i == 0,
-      );
-    });
   }
 
   // STUB — replace in Phase 6B when backend endpoint is live
@@ -305,45 +289,71 @@ class ApiService {
   /// Serializes a [PatientCase] to a JSON-compatible map.
   /// Built here because the model class does not have a toJson method.
   Map<String, dynamic> _patientCaseToJson(PatientCase pc) {
-  final map = <String, dynamic>{
-    'case_id': pc.caseId,
-    'patient_code': pc.patientCode,
-    'age': pc.age,
-    'sex': pc.sex.toLowerCase(),
-    'pregnant': pc.pregnant,
-    'chief_complaint': pc.chiefComplaint,
-    'symptoms': pc.symptoms,
-    'duration_minutes': pc.durationMinutes,
-    'pain_score': pc.painScore,
-    'nurse_note': pc.nurseNote,
-    'arrival_time': pc.arrivalTime,
-    'current_wait_minutes': pc.currentWaitMinutes,
-    'source': pc.source,
-    'vitals_history': pc.vitalsHistory.map((v) => {
-      'heart_rate': v.heartRate,
-      'systolic_bp': v.systolicBp,
-      'diastolic_bp': v.diastolicBp,
-      'respiratory_rate': v.respiratoryRate,
-      'spo2': v.spo2,
-      'temperature_c': v.temperatureC,
-      'consciousness': v.consciousness,
-      'recorded_at': v.recordedAt,
-    }).toList(),
-  };
-  if (pc.vitals != null) {
-    map['vitals'] = {
-      'heart_rate': pc.vitals!.heartRate,
-      'systolic_bp': pc.vitals!.systolicBp,
-      'diastolic_bp': pc.vitals!.diastolicBp,
-      'respiratory_rate': pc.vitals!.respiratoryRate,
-      'spo2': pc.vitals!.spo2,
-      'temperature_c': pc.vitals!.temperatureC,
-      'consciousness': pc.vitals!.consciousness,
-      'recorded_at': pc.vitals!.recordedAt,
+    final map = <String, dynamic>{
+      'case_id': pc.caseId,
+      'patient_code': pc.patientCode,
+      'age': pc.age,
+      'sex': pc.sex.toLowerCase(),
+      'pregnant': pc.pregnant,
+      'chief_complaint': pc.chiefComplaint,
+      'symptoms': pc.symptoms,
+      'duration_minutes': pc.durationMinutes,
+      'pain_score': pc.painScore,
+      'nurse_note': pc.nurseNote,
+      'arrival_time': pc.arrivalTime,
+      'current_wait_minutes': pc.currentWaitMinutes,
+      'source': pc.source,
+      'vitals_history': pc.vitalsHistory.map((v) => {
+        'heart_rate': v.heartRate,
+        'systolic_bp': v.systolicBp,
+        'diastolic_bp': v.diastolicBp,
+        'respiratory_rate': v.respiratoryRate,
+        'spo2': v.spo2,
+        'temperature_c': v.temperatureC,
+        'consciousness': v.consciousness,
+        'recorded_at': v.recordedAt,
+      }).toList(),
+    };
+    if (pc.vitals != null) {
+      map['vitals'] = {
+        'heart_rate': pc.vitals!.heartRate,
+        'systolic_bp': pc.vitals!.systolicBp,
+        'diastolic_bp': pc.vitals!.diastolicBp,
+        'respiratory_rate': pc.vitals!.respiratoryRate,
+        'spo2': pc.vitals!.spo2,
+        'temperature_c': pc.vitals!.temperatureC,
+        'consciousness': pc.vitals!.consciousness,
+        'recorded_at': pc.vitals!.recordedAt,
+      };
+    }
+    return map;
+  }
+
+  /// Serializes a [TriageResult] to a JSON-compatible map.
+  Map<String, dynamic> _triageResultToJson(TriageResult tr) {
+    return {
+      'case_id': tr.caseId,
+      'priority_level': tr.priorityLevel,
+      'priority_label': tr.priorityLabel,
+      'risk_score': tr.riskScore,
+      'confidence': tr.confidence,
+      'red_flags': tr.redFlags,
+      'contradictions': tr.contradictions
+          .map((c) => {
+                'conflict_type': c.conflictType,
+                'severity': c.severity,
+                'evidence_a': c.evidenceA,
+                'evidence_b': c.evidenceB,
+                'resolution_action': c.resolutionAction,
+              })
+          .toList(),
+      'missing_fields': tr.missingFields,
+      'reasoning': tr.reasoning,
+      'recommended_actions': tr.recommendedActions,
+      'safety_disclaimer': tr.safetyDisclaimer,
+      'llm_explanation': tr.llmExplanation,
     };
   }
-  return map;
-}
 
   // ---------------------------------------------------------------------------
   // MOCK DATA CONSTANTS
