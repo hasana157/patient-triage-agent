@@ -148,7 +148,7 @@ Click **Run Demo** on the home screen to auto-navigate:
 | 01 | Architecture | Both | ✅ Complete |
 | 02 | Flutter UI | Member 2 | ✅ Complete |
 | 03 | Backend + Triage Engine | Member 1 | ✅ Complete |
-| 04 | Evidence Pipeline | Member 2 | 🔄 Next |
+| 04 | Evidence Pipeline | Member 2 | ✅ Complete |
 | 05A | Action Planner + Constraints | Member 1 | ✅ Complete |
 | 05B | Executor + Recovery | Member 2 | 🔄 Next |
 | 06A | Flutter Integration M1 modules | Member 1 | 🔄 Pending |
