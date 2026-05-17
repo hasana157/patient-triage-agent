@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../models/models.dart';
 import '../theme/app_theme.dart';
 
@@ -80,43 +81,13 @@ class LogsScreen extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            // Safety banner
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppTheme.safetyBannerBg,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                    color: AppTheme.orange.withValues(alpha: 0.3)),
-              ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Icon(Icons.shield_outlined,
-                      size: 18, color: AppTheme.orange),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'Clinician must confirm. This system does not '
-                      'replace licensed clinical judgment.',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey[800],
-                        height: 1.4,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+            AppTheme.buildSafetyBanner(),
             const SizedBox(height: 16),
             Expanded(
               child: SingleChildScrollView(
                 child: SelectableText(
                   jsonText,
-                  style: const TextStyle(
-                    fontFamily: 'monospace',
+                  style: GoogleFonts.robotoMono(
                     fontSize: 12,
                     height: 1.5,
                   ),
