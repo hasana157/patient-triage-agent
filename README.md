@@ -94,7 +94,7 @@ By default, the application runs locally using smart pre-compiled explanation te
 
 The project was built by a two-member team with equal contributions, dividing the core agentic decision-and-action loops right down the middle:
 
-### 🧠 The Agentic AI Workload Split (50/50)
+### 🧠 The Agentic AI Workload 
 
 | Phase of Agentic Loop | Component | Technical Owner | Why it is "Agentic AI" |
 | :--- | :--- | :--- | :--- |
