@@ -9,7 +9,7 @@ It does not diagnose disease, prescribe treatment, or replace licensed clinical 
 1. **No Clinical Validation**: The hard red-flag rules (e.g., SpO2 < 90 = RED) and weighted scoring formulas were designed for structural demonstration and have not been peer-reviewed or tested in a clinical trial.
 2. **Synthetic Data Only**: The system is hardcoded to accept the synthetic variables provided in the `demo_cases.json`. Real-world EHR integrations (HL7/FHIR) are not implemented.
 3. **Deterministic Constraints**: The planner acts intelligently, but it is bounded by the static `resources.json` rules rather than live hospital sensors.
-4. **No True Generative AI for Decisions**: To guarantee safety, LLMs are intentionally omitted from the core triage logic. The "agentic" behavior comes from programmatic planning, constraint solving, and recovery loops rather than generative text.
+4. **LLM Limited to Explanation Layer**: To guarantee safety, LLMs are used only for explanation phrasing, nurse-note summarization, and audit-friendly reasoning generation. It must not make final triage, diagnosis, treatment, escalation, or safety-critical decisions. The core triage, planning, constraint checking, and recovery remain entirely deterministic.
 5. **Mock Execution**: The `executor_service` only simulates actions (e.g., it writes to an audit log instead of actually paging a doctor).
 
 ## Future Work

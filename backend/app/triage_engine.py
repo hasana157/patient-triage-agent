@@ -129,7 +129,7 @@ def evaluate_patient(case: PatientCase) -> TriageResult:
         confidence -= 0.3 # Contradiction lowers confidence
     confidence = max(0.1, confidence)
 
-    return TriageResult(
+    result = TriageResult(
         case_id=case.case_id,
         priority_level=priority_level,
         priority_label=priority_level.value,
@@ -141,3 +141,6 @@ def evaluate_patient(case: PatientCase) -> TriageResult:
         reasoning=reasoning,
         recommended_actions=[],
     )
+    from app.explanation_service import generate_llm_explanation
+    result.llm_explanation = generate_llm_explanation(result, case.nurse_note)
+    return result

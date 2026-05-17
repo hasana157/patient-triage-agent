@@ -1,0 +1,593 @@
+Patient Triage Agent
+TriageFlow AI
+Software Requirements Specification (SRS)  +  A-to-Z Phase Execution Plan
+Medical Safety Note: This is a triage decision-support prototype. It does not diagnose, prescribe, or replace licensed clinical judgment.
+
+Table of Contents
+
+1. Executive Summary
+The Patient Triage Agent is a mobile-first, agentic clinical decision-support prototype for emergency department triage. A nurse or doctor enters patient demographics, symptoms, vitals, wait time, risk factors, and short notes. The system returns a triage priority, reasoning, missing-data warnings, contradiction flags, recommended next actions, and simulated execution logs.
+
+The project is designed for a two-member student team using Google Antigravity as the central development and orchestration platform. Antigravity must produce visible artifacts — task plans, implementation plans, screenshots, recordings, test outputs, decision traces, tool-call evidence, and recovery logs — because the challenge rewards agentic systems that move from input to insight to action, not only functional apps.
+
+Version 2.0 restructures responsibilities so both members own equal workloads: comparable lines of code, comparable complexity, comparable demo-facing value. No phase is idle time for one member while the other works.
+
+
+2. Challenge Alignment
+The challenge asks for an Autonomous Content-to-Action Agent that ingests multiple content sources, extracts insights, resolves conflicting evidence, generates 3–5 interconnected actions, simulates execution, handles partial failure, and visualises outcome changes. The Patient Triage Agent maps cleanly to these requirements by treating each patient case as a multi-source operational signal.
+
+
+3. Medical Safety Positioning
+This section is non-negotiable. The project must be framed as a supervised decision-support prototype. It must not claim to diagnose disease, prescribe treatment, replace clinical judgment, or be safe for real patient care without formal clinical validation.
+
+
+4. Product Vision and Scope
+4.1 Vision Statement
+TriageFlow AI helps emergency staff prioritise patients faster, more consistently, and more transparently by combining symptoms, vitals, queue pressure, and resource availability into an explainable triage action plan.
+4.2 Problem Statement
+In many hospitals, emergency departments face overcrowding, long waits, insufficient staffing, and manual prioritisation pressure. A patient with severe risk can wait too long if information is incomplete, contradictory, or buried in notes. The project solves this as a prototype by giving triage staff a structured, explainable, and auditable urgency assessment.
+4.3 In Scope
+Mobile app for nurse/doctor triage entry
+Mock patient queue and resource dashboard
+Deterministic rule-based triage engine with optional LLM-assisted explanation and summarization layer
+Contradiction and missing-data detection
+Action chain generation and simulated execution
+Failure recovery simulation
+Antigravity trace/log evidence
+README, SRS, demo script, and video plan
+4.4 Out of Scope
+Real diagnosis or treatment recommendation
+Real hospital deployment or integration with official EHR systems
+Real patient data storage
+Regulatory approval or clinical validation
+Replacement of nurse/doctor decision-making
+
+5. Stakeholders, Personas, and Use Cases
+
+5.1 Primary Use Cases
+
+6. System Overview and Architecture
+The architecture remains simple enough for a student team but strong enough to satisfy the challenge. Keep the AI logic deterministic where possible. LLM is used only for explanation phrasing, nurse-note summarization, and audit-friendly reasoning generation. It must not make final triage, diagnosis, treatment, escalation, or safety-critical decisions.
+
+
+7. Functional Requirements
+
+8. Non-Functional Requirements
+
+9. Data Sources and Data Models
+9.1 Required Demo Data Sources
+
+9.2 Core Data Model — PatientCase
+{ "case_id": "CASE-001", "patient_code": "PT-001", "age": 58, "sex": "female", "pregnant": false, "chief_complaint": "chest pain and shortness of breath", "symptoms": ["chest_pain","shortness_of_breath","sweating"], "duration_minutes": 45, "pain_score": 9, "vitals": { "heart_rate": 124, "systolic_bp": 88, "diastolic_bp": 56, "respiratory_rate": 28, "spo2": 89, "temperature_c": 37.4, "consciousness": "alert" }, "nurse_note": "Patient appears pale and anxious. Severe chest pressure.", "arrival_time": "2026-05-13T18:30:00+05:00", "current_wait_minutes": 22 }
+9.3 Core Data Model — TriageResult
+{ "case_id": "CASE-001", "priority_level": "RED", "priority_label": "Critical - immediate clinician review", "risk_score": 0.94, "confidence": 0.88, "red_flags": ["low_spo2","hypotension","severe_chest_pain"], "contradictions": [], "missing_fields": [], "reasoning": ["SpO2 below safe threshold","Systolic BP low","Severe chest pain with sweating and shortness of breath"], "recommended_actions": ["alert_doctor","move_to_resus","prepare_ecg","reserve_oxygen","reassess_in_5_min"] }
+
+10. Triage Decision Logic
+A hybrid engine is used: hard safety rules first, then scoring. Hard rules prevent a dangerous case from being downgraded by a weighted average. The weighted score differentiates non-critical cases.
+
+
+10.1 Hard Red-Flag Rules
+If any critical rule is true the engine returns Red or Orange regardless of weighted score. Thresholds are simplified for prototype demonstration and must be reviewed by clinicians before any real use.
+
+
+10.2 Weighted Risk Score
+risk_score = 0.35 * vitals_risk + 0.25 * symptom_risk + 0.15 * vulnerable_patient_risk + 0.10 * pain_duration_risk + 0.10 * wait_time_risk + 0.05 * resource_pressure_risk
+
+confidence = 1.0 - missing_data_penalty - contradiction_penalty - stale_data_penalty
+
+
+10.3 Contradiction Examples
+
+11. Agentic Workflow and Action Chain
+The system is demonstrated as an agentic workflow, not a single prediction. The agent must analyse, decide, act, verify, recover, and update state.
+
+Ingest patient case + queue + resource data
+Validate fields and detect missing/invalid values
+Extract risk signals from symptoms, vitals, and nurse note
+Detect contradictions and stale evidence
+Assign triage priority with confidence
+Generate connected action chain
+Check resource/time constraints
+Simulate action execution
+Handle failures with retry/fallback/rollback
+Show before/after operational outcome
+
+11.1 Standard Action Chain
+
+11.2 Failure Recovery Scenarios
+
+12. UX/UI Specification
+The app should look like a clean hospital operations dashboard — simple enough for a nurse to understand quickly, rich enough to impress judges.
+
+
+12.1 Color System
+
+12.2 Patient Intake Fields
+
+13. Backend API Specification
+
+14. Security, Privacy, and Audit Requirements
+Pakistan currently does not have a fully enacted GDPR-style general data protection statute. Proposed personal data protection frameworks and PECA-related obligations make privacy-aware design important. For this academic prototype, avoid real patient data entirely.
+
+
+15. Testing and Validation Plan
+
+15.1 Golden Demo Cases
+
+16. Project Folder Structure
+patient-triage-agent/
+├── backend/
+│   ├── app/
+│   │   ├── main.py
+│   │   ├── config.py
+│   │   ├── models/          (patient_models.py, triage_models.py, action_models.py, log_models.py)
+│   │   ├── services/        (triage_engine.py, contradiction_service.py, planner_service.py,
+│   │   │                     constraint_service.py, executor_service.py, recovery_service.py, outcome_service.py)
+│   │   ├── data/            (demo_cases.json, queue.csv, resources.json, vitals_history.json, triage_policy_mock.txt)
+│   │   └── logs/            (decision_trace.json, action_execution_log.json, antigravity_trace_summary.md)
+│   └── tests/
+├── mobile/
+│   └── lib/
+│       ├── main.dart
+│       ├── screens/
+│       ├── widgets/
+│       ├── models/
+│       ├── services/api_service.dart
+│       └── theme/
+├── docs/                    (SRS.docx, architecture.md, demo_script.md, screenshots/)
+├── demo/                    (demo_video.mp4, demo_inputs/, demo_outputs/)
+├── .agent/rules/            (patient-triage-safety.md)
+├── README.md
+├── .gitignore
+└── .env.example
+
+17. Tools, Installation, and Setup
+
+18. Two-Member Phase Execution Plan (v2.0 — Equal Responsibility)
+Version 2.0 restructures all phases so both members carry equal workload in terms of code volume, system complexity, and demo-facing value. Phases 2/3, 6/7 run in parallel. Phase 5 is split into two simultaneous sub-phases. No member is idle while the other works.
+‖ = runs in parallel with the adjacent phase
+
+
+
+Tasks
+Install Antigravity, Chrome, Git, Python 3.11+, Flutter, Android Studio on both machines
+Open project in Antigravity workspace; enable Review-driven development
+Create .gitignore, .env.example, and README.md skeleton
+Confirm backend and mobile run at least hello-world level
+Create .agent/rules/patient-triage-safety.md
+Agree on git branching model (feature branches per phase)
+
+Deliverables / Definition of Done
+Project opens in Antigravity without errors
+flutter doctor passes on Member 2 machine
+Backend /health route returns 200 on Member 1 machine
+GitHub phase branches created
+Safety rules file committed
+
+Handoff Checklist
+Both members confirm dev environment works before proceeding
+Push Phase 0 branch and open PR for review
+Agree on data contract format (JSON schema) for Phase 1
+
+
+Tasks
+Both members together: define architecture diagram in docs/architecture.md
+Define 5 triage levels, hard red-flag rules, scoring formula, and safety disclaimers
+Both members together: finalise Python data models (PatientCase, Vitals, TriageResult, ActionStep, ExecutionLog, OutcomeMetrics)
+Member 1: create synthetic demo cases in backend/app/data/demo_cases.json
+Member 2: create resources.json and queue.csv with mock data
+Both: agree on API contract and document it in README
+Antigravity task-plan artifact for this phase must be captured
+
+Deliverables / Definition of Done
+docs/architecture.md complete
+backend/app/models/*.py complete with all data classes
+backend/app/data/ populated with demo cases, resources, queue
+API contract section in README agreed by both members
+Antigravity task-plan screenshot captured
+
+Handoff Checklist
+Member 1 proceeds to Phase 3 (backend); Member 2 proceeds to Phase 2 (Flutter) — simultaneously
+Both must not change shared data models without notifying the other
+Commit and push Phase 1 branch before splitting
+
+
+Tasks
+Build all 8 screens using mock data: Home, PatientIntake, TriageResult, ContradictionScreen, ActionChainScreen, ExecutionSimulationScreen, QueueDashboardScreen, LogsScreen
+Create reusable widgets: PriorityBadge, VitalsInputCard, SymptomChipSelector, RiskScoreCard, RedFlagList, ContradictionCard, ActionTimeline, OutcomeMetricCard, ExecutionLogTimeline
+Implement colour-coded priority cards using the approved colour system
+Add form validation UI (not connected to backend yet)
+Add loading and error state placeholder components
+Save screenshots of all screens
+
+Deliverables / Definition of Done
+Mobile app runs; all screens navigate
+Mock triage result visible with correct priority colours
+All form fields render with validation messages
+docs/screenshots/ updated with all screen captures
+ApiService.dart stub created (empty methods, no backend calls yet)
+
+Handoff Checklist
+Push Phase 2 branch; flag Member 1 to review screen structure
+Document which mock data shapes are expected (for Member 1 to match)
+Do not implement real backend calls — that is Phase 6B
+
+
+Tasks
+Implement FastAPI app in backend/app/main.py with CORS and exception handlers
+Implement hard red-flag rule engine in triage_engine.py (RF-001 through RF-007)
+Implement weighted risk score calculator
+Implement confidence score with missing-data and stale-data penalties
+Return deterministic JSON responses with reasoning, red_flags, missing_fields, priority_level, confidence
+Implement endpoints: GET /health, GET /api/demo/cases, POST /api/triage/evaluate, GET /api/queue
+Add pytest tests for all five golden demo cases (CASE-001 through CASE-005)
+
+Deliverables / Definition of Done
+GET /health returns 200
+POST /api/triage/evaluate returns correct priority for all 5 golden cases
+GET /api/demo/cases returns synthetic demo data
+pytest passes for core scoring and red-flag logic
+All responses include reasoning array
+
+Handoff Checklist
+Push Phase 3 branch; hand off to Member 2 for Phase 4
+Share Postman collection or curl examples for all endpoints
+Do not implement planner or executor — that is Phase 5A
+
+
+Tasks
+Implement contradiction_service.py: detect conflicts between symptoms, nurse note, vitals, and vitals history
+Implement missing data detector: identify absent required vitals and reduce confidence score accordingly
+Implement stale vitals detection using timestamp comparison
+Return contradiction objects with evidence_a, evidence_b, conflict_type, severity, and resolution_action
+Add confidence penalties for missing, contradictory, and stale data
+Extend POST /api/triage/evaluate to include contradictions and missing_fields in response
+Add pytest tests for at least 5 contradiction scenarios
+Prepare Flutter ContradictionCard and MissingDataBanner widgets for real data
+
+Deliverables / Definition of Done
+Contradiction service correctly identifies all 5 contradiction types from Section 10.3
+Missing vitals reduce confidence score by documented penalty amount
+Stale vitals flagged when timestamp delta exceeds threshold
+Tests pass for contradiction detection
+Triage result endpoint now returns contradictions and missing_fields arrays
+
+Handoff Checklist
+Push Phase 4 branch; flag Member 1 to begin Phase 5A simultaneously
+Update API contract in README with new contradiction response fields
+Coordinate with Member 1 on shared response schema changes
+
+
+Tasks
+Implement planner_service.py: generate 3–5 connected actions based on priority level
+Implement constraint_service.py: check doctor availability, bed availability, oxygen/ECG availability, wait time, alert deadline
+For infeasible actions, generate fallback alternatives and document in constraint_card
+Implement POST /api/actions/plan endpoint returning action chain with feasibility badges
+Add constraint-fail scenarios: zero doctors available → escalate to senior nurse
+Add tests for planner and constraint checker covering all 5 priority levels
+Implement explanation_service.py for optional LLM-assisted explanation generation.
+Generate human-readable clinical reasoning summaries from deterministic triage output.
+Use LLM only for explanation phrasing, nurse-note summarization, and audit summaries.
+Ensure the LLM cannot modify or override safety-critical decisions (priority_level, risk_score, red_flags, contradictions, recommended_actions, action_chain).
+Add safe prompt templates using only validated backend output.
+Add llm_explanation field in API responses.
+Add fallback behavior: if LLM fails or times out, return existing deterministic reasoning array.
+Add tests verifying that the LLM layer is explanation-only and does not affect core triage logic.
+
+Deliverables / Definition of Done
+POST /api/actions/plan returns 3–5 actions for each priority level
+Infeasible actions replaced with documented fallback alternatives
+Constraint cards show why an action was modified
+Tests pass for planner and constraint logic
+
+Handoff Checklist
+Push Phase 5A branch; wait for Member 2 Phase 5B completion before merging
+Coordinate on shared action state format used by executor (Member 2)
+Do not implement execution or recovery — that is Phase 5B
+
+
+Tasks
+Implement executor_service.py: simulate each action step-by-step with visible state updates
+Force one alert failure on first attempt for demo purposes (doctor alert API fails)
+Implement recovery_service.py: retry once; if retry fails, fallback to local urgent queue/SMS draft; rollback on total failure
+Save action_execution_log.json with full step status history
+Generate outcome_metrics.json: before/after queue position, wait time delta, risk score change, alerts sent
+Implement endpoints: POST /api/actions/execute, GET /api/outcome, GET /api/logs, POST /api/demo/run-full
+Add tests for retry logic, fallback, and rollback scenarios
+
+Deliverables / Definition of Done
+POST /api/actions/execute shows step-by-step state changes
+Forced failure, retry, and fallback visible in execution log
+GET /api/outcome returns before/after metrics
+GET /api/logs returns complete decision and action trace
+POST /api/demo/run-full runs the complete pipeline in one call
+Tests pass for recovery scenarios
+
+Handoff Checklist
+Push Phase 5B branch; coordinate merge with Phase 5A
+Share action_execution_log.json format with Member 1 for Antigravity artifacts phase
+Proceed to Phase 6B (Flutter integration of executor + outcome)
+
+
+Tasks
+Wire PatientIntakeScreen form to POST /api/triage/evaluate
+Wire TriageResultScreen to display priority, risk score, confidence, red flags, and reasoning from live backend
+Wire ActionChainScreen to POST /api/actions/plan with feasibility badges
+Add loading states: Evaluating patient, Checking contradictions, Planning actions
+Add error handling and retry button for backend failures
+Keep demo mock fallback active if backend is offline
+
+Deliverables / Definition of Done
+Intake form submits to backend and displays real triage result
+Action chain screen shows live planner response with constraint badges
+Loading and error states visible
+Mock fallback works when backend is offline
+
+Handoff Checklist
+Push Phase 6A branch; flag Member 2 when integration is stable
+Do not modify executor or outcome screens — that is Phase 6B
+
+
+Tasks
+Wire ContradictionScreen and MissingDataBanner to live contradiction and missing_fields data from backend
+Wire ExecutionSimulationScreen to POST /api/actions/execute with step-by-step animation
+Wire QueueDashboardScreen to GET /api/outcome for before/after metrics
+Wire LogsScreen to GET /api/logs for full decision trace
+Add loading states: Executing action chain, Recovering from failed alert
+Polish demo mode: one-click full run button triggers POST /api/demo/run-full and animates all screens
+Polish safety messages and clinician-confirmation language across all screens
+
+Deliverables / Definition of Done
+Contradiction and missing-data cards display live backend data
+Execution simulation animates step-by-step with failure/retry/fallback visible
+Outcome dashboard shows before/after metrics from backend
+Logs screen shows complete trace
+One-click demo button works end-to-end
+
+Handoff Checklist
+Push Phase 6B branch; coordinate merge with Phase 6A
+Both members do a joint end-to-end demo run before Phase 7
+
+
+Tasks
+Run full pytest suite and document results
+Write README.md covering problem, solution, architecture, setup commands, and demo flow
+Create docs/architecture.md final version
+Create docs/cost_latency_analysis.md
+Create docs/limitations.md with safety and scope disclaimers
+Collect all Antigravity artifacts: task plans, implementation plans, terminal test output, recovery traces
+Create backend/app/logs/antigravity_trace_summary.md
+Verify /api/demo/run-full returns complete result in under 2 seconds
+
+Deliverables / Definition of Done
+All pytest tests pass with evidence captured
+README complete and accurate
+All docs/ files complete
+Antigravity trace summary includes: task plans, screenshots, test output, recovery log
+Performance target verified
+
+Handoff Checklist
+Push Phase 7A branch; hand off complete docs to Member 2 for demo script
+Do not change backend code after this phase without informing Member 2
+
+
+Tasks
+Run flutter analyze and fix all warnings
+Test all screens manually on emulator for all 5 demo cases
+Take final screenshots of every screen for docs/screenshots/
+Create docs/demo_script.md with narration for each screen and timing
+Polish UI copy: safety messages, button labels, card headings
+Identify and fix any UI crashes or layout issues
+Verify one-click demo button works reliably for 5 consecutive runs
+
+Deliverables / Definition of Done
+flutter analyze returns zero errors
+All 5 demo cases run without crash
+Final screenshots captured
+Demo script complete with timings matching Section 20.1
+UI polish complete
+
+Handoff Checklist
+Push Phase 7B branch; share demo script with Member 1 for Phase 8 recording
+Flag any backend issues to Member 1 before recording begins
+
+
+Tasks
+Record 3–5 minute demo video together using OBS Studio
+Member 1 narrates: architecture, triage engine, action planner, Antigravity artifacts, backend QA results
+Member 2 narrates: UI screens, evidence pipeline, execution simulation, failure recovery, outcome dashboard
+Polish final submission folder structure
+Complete final GitHub repository check (no secrets, no real data, clean history)
+Submit all required deliverables per challenge checklist
+
+Deliverables / Definition of Done
+demo/demo_video.mp4 is 3–5 minutes
+All 8 demo script beats covered in video
+GitHub repository is clean and public
+Final submission checklist complete (Section 20.2)
+Both members credited in README
+
+Handoff Checklist
+Both members review final submission before clicking submit
+Archive Antigravity workspace screenshots as backup evidence
+
+19. Antigravity Prompt Library
+Use these prompts directly inside Antigravity. Before each phase, paste the relevant prompt into Agent Manager. Ask Antigravity to produce a plan artifact first. Review the plan before allowing file edits or terminal commands.
+
+Global Rules Prompt
+You are working on Patient Triage Agent, a mobile-first clinical decision-support prototype.
+This is NOT a diagnosis tool and NOT a replacement for licensed clinical judgment.
+Use Google Antigravity as the central development platform.
+Always use review-driven development.
+Do not run destructive commands without asking.
+Do not delete existing files unless I explicitly approve.
+Do not store real patient data. Use synthetic demo data only.
+Every clinical output must include uncertainty, reasoning, and clinician confirmation language.
+Every Red/Orange priority must generate an action chain.
+Every contradiction or missing critical field must generate a clarification/manual-review action.
+Produce artifacts: task plan, implementation plan, test results, screenshots, and recovery trace.
+
+Phase 1 — Architecture (Joint Session) Prompt
+Act as a senior agentic AI engineer, medical safety analyst, and software architect.
+Both team members are present. Facilitate a joint architecture session.
+Tasks:
+1. Create docs/architecture.md.
+2. Define 5 prototype priority levels: Red, Orange, Yellow, Green, Blue.
+3. Define hard red-flag rules (RF-001 through RF-007).
+4. Define weighted risk score and confidence score formulas.
+5. Define all data models: PatientCase, Vitals, TriageResult, ActionStep, ExecutionLog, OutcomeMetrics.
+6. Member 1 creates demo_cases.json; Member 2 creates resources.json and queue.csv.
+7. Agree on and document the API contract.
+8. Create Antigravity task-plan artifact and screenshot it.
+Rules: No real patient data. No clinical diagnosis claims. Include missing-data and contradiction handling.
+Output: Files created, data model summary, API contract, split handoff notes for both members.
+
+Phase 2 — Flutter UI (Member 2) Prompt
+Act as a senior Flutter developer and UX/UI designer for healthcare operations.
+Build the mobile UI skeleton for Patient Triage Agent using mock data only.
+Screens: Home, PatientIntake, TriageResult, ContradictionScreen, ActionChainScreen, ExecutionSimulationScreen, QueueDashboardScreen, LogsScreen.
+Widgets: PriorityBadge, VitalsInputCard, SymptomChipSelector, RiskScoreCard, RedFlagList, ContradictionCard, ActionTimeline, OutcomeMetricCard, ExecutionLogTimeline.
+UX: Red/Orange/Yellow/Green/Blue priority colours. Clear safety notes. Loading and error state placeholders. Professional hospital dashboard style. No backend integration yet.
+Output: Files changed, screens implemented, run instructions, screenshots, handoff notes.
+
+Phase 3 — Backend and Triage Engine (Member 1) Prompt
+Act as a senior FastAPI backend engineer and clinical decision-support rules engineer.
+Implement backend API and deterministic triage engine.
+Tasks: FastAPI app, hard red-flag rules (RF-001 through RF-007), weighted risk_score, confidence score, deterministic JSON responses.
+Endpoints: GET /health, GET /api/demo/cases, POST /api/triage/evaluate, GET /api/queue.
+Add pytest tests for all 5 golden demo cases.
+Rules: Deterministic output for demo. No LLM for final priority. Include disclaimers in response text.
+Output: API response examples, test results, files changed, handoff notes.
+
+Phase 4 — Evidence Pipeline (Member 2) Prompt
+Act as a senior agentic AI engineer focused on evidence resolution and safety-critical workflow.
+Add contradiction, stale-data, and missing-data detection.
+Tasks: contradiction_service.py, missing data detector, stale vitals detection (timestamp), confidence penalties, contradiction objects with evidence_a/evidence_b/conflict_type/severity/resolution_action.
+Extend POST /api/triage/evaluate to return contradictions and missing_fields arrays.
+Add tests for at least 5 contradiction scenarios.
+Rules: Never hide contradictions. If critical vitals conflict with symptoms, prioritise safety and ask for recheck.
+Output: Contradiction examples, test results, API contract updates, handoff notes.
+
+Phase 5A — Action Planner, Constraint Checker, and LLM Explanation Layer (Member 1) Prompt
+Act as a senior agentic workflow engineer and healthcare operations planner.
+Implement planner_service.py, constraint_service.py, and explanation_service.py.
+Tasks: Generate 3–5 connected actions based on priority. Check constraints: doctor availability, bed availability, oxygen/ECG, wait time, alert deadline. For infeasible actions, generate fallback alternatives. Implement explanation_service.py for optional LLM-assisted explanation generation (phrasing, nurse-note summarization, audit-friendly reasoning). Generate human-readable clinical reasoning summaries from deterministic triage output. Ensure the LLM cannot modify or override core triage fields. Add fallback behavior to return deterministic reasoning if LLM fails or times out. Add tests verifying explanation-only LLM behavior.
+Endpoint: POST /api/actions/plan (returns action chain and llm_explanation).
+Add tests for planner, constraint, and LLM explanation layer logic.
+Output: Action chain examples, constraint card examples, test results.
+
+Phase 5B — Execution Simulator and Recovery (Member 2) Prompt
+Act as a senior agentic simulation architect and failure-recovery engineer.
+Implement executor_service.py and recovery_service.py.
+Tasks: Simulate each action step-by-step with state updates. Force doctor alert failure on first attempt. Retry once. If retry fails, fallback to local urgent queue/SMS draft. Generate outcome_metrics.json (before/after queue, wait time, risk score).
+Endpoints: POST /api/actions/execute, GET /api/outcome, GET /api/logs, POST /api/demo/run-full.
+Add tests for retry, fallback, and rollback.
+Output: Execution log example, failure/recovery trace, outcome metrics, test results.
+
+Phase 6A — Flutter Integration — M1 Modules (Member 1) Prompt
+Act as a senior Flutter integration engineer.
+Wire Member 1 backend modules into the Flutter app.
+Tasks: Connect PatientIntakeScreen to POST /api/triage/evaluate. Connect TriageResultScreen to live backend. Connect ActionChainScreen to POST /api/actions/plan. Add loading states and error handling. Keep demo mock fallback if backend is offline.
+Output: Connected screens, run instructions, error states implemented.
+
+Phase 6B — Flutter Integration — M2 Modules (Member 2) Prompt
+Act as a senior Flutter integration engineer and UX polish lead.
+Wire Member 2 backend modules into the Flutter app.
+Tasks: Connect ContradictionScreen and MissingDataBanner to live backend. Connect ExecutionSimulationScreen to POST /api/actions/execute with step-by-step animation. Connect QueueDashboardScreen to GET /api/outcome. Connect LogsScreen to GET /api/logs. Add loading states. Polish one-click demo button for POST /api/demo/run-full. Polish all safety messages.
+Output: Connected screens, run instructions, screenshots, handoff notes.
+
+Phase 7A — Backend QA and Artifacts (Member 1) Prompt
+Act as a senior QA engineer and technical writer.
+Tasks: Run full pytest suite and document results. Write README.md. Create docs/architecture.md final version, docs/cost_latency_analysis.md, docs/limitations.md. Collect all Antigravity artifacts. Create antigravity_trace_summary.md. Verify /api/demo/run-full performance target.
+Output: Test evidence, docs created, Antigravity trace summary, final checklist.
+
+Phase 7B — Flutter QA and Demo Script (Member 2) Prompt
+Act as a senior QA engineer and demo director.
+Tasks: Run flutter analyze, fix all warnings. Test all 5 demo cases on emulator. Take final screenshots. Create docs/demo_script.md with screen-by-screen narration and timing. Polish all UI copy and safety messages.
+Output: Test evidence, final screenshots, demo script, UI polish notes.
+
+Phase 8 — Demo and Submission (Both) Prompt
+Act as a senior product manager and hackathon judge reviewer.
+Both members present. Record 3–5 minute demo video.
+Tasks: Member 1 narrates architecture, triage engine, action planner, Antigravity artifacts. Member 2 narrates UI, evidence pipeline, execution simulation, failure recovery, outcome dashboard. Create final submission package. Complete GitHub repository check.
+Output: Final demo script, submission checklist, quick-fix list.
+
+
+20. Demo Plan and Submission Checklist
+20.1 3–5 Minute Demo Script
+
+20.2 Final Submission Checklist
+Mobile app runs on emulator or physical phone
+Backend runs locally on one or both machines
+POST /api/demo/run-full works end-to-end
+Synthetic demo cases available (CASE-001 through CASE-005)
+At least one Red case demonstrated
+At least one contradiction/missing-data case demonstrated
+3–5 action chain demonstrated
+Failure recovery (retry + fallback) demonstrated
+Before/after outcome dashboard shown
+Antigravity artifacts captured (task plans, test output, trace summary, screenshots)
+README complete and accurate
+Demo video is 3–5 minutes
+No real patient data anywhere in repository
+GitHub repository is clean (no secrets, no debug files)
+Both members credited as equal contributors in README
+
+21. Risks, Limitations, and Future Scope
+
+21.1 Future Scope
+Clinical validation with licensed emergency physicians
+Integration with hospital EHR after regulatory approval
+Voice-based nurse note entry in Urdu/English
+Offline mode for low-resource hospitals
+Federated learning or privacy-preserving analytics
+Admin dashboard for crowding prediction
+Multilingual patient-facing intake assistant, supervised by staff
+
+22. References
+
+Appendix A — Handoff Template
+PHASE HANDOFF
+Phase:
+Owner:
+Branch:
+Commit hash:
+Files changed:
+What works:
+How to run:
+Tests passed:
+Screenshots/artifacts:
+Known issues:
+Next member must do:
+Do not touch/change:
+
+Appendix B — README Skeleton
+# Patient Triage Agent / TriageFlow AI
+
+## Contributors
+- Member 1: Backend, triage engine, action planner, constraints, backend QA, Antigravity artifacts
+- Member 2: Flutter UI, evidence pipeline, execution simulator, recovery, Flutter QA, demo script
+
+## Problem
+Emergency departments face overcrowding and manual triage pressure.
+
+## Solution
+A mobile-first, agentic triage decision-support prototype.
+
+## Safety Note
+This is not a diagnosis tool and not for real clinical deployment.
+
+## Antigravity Role
+Used for planning, coding, testing, artifacts, screenshots, and execution trace.
+
+## Architecture
+Flutter + FastAPI + deterministic triage engine + action simulator.
+
+## How to Run
+[Backend and mobile commands here]
+
+## Demo Flow
+Patient input → triage → contradiction → action chain → recovery → outcome
+
+## Limitations
+Synthetic data only, simplified rules, not clinically validated.
