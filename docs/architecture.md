@@ -6,16 +6,18 @@ TriageFlow AI is a mobile-first emergency department triage decision-support pro
 
 The system is deliberately conservative. It does not diagnose, prescribe, or replace a nurse or doctor. The safest product line is: the agent highlights acuity, risks, missing data, contradictions, and operational next actions while final responsibility stays with licensed clinical staff.
 
+LLM is used only for explanation phrasing, nurse-note summarization, and audit-friendly reasoning generation. It must not make final triage, diagnosis, treatment, escalation, or safety-critical decisions.
+
 ## High-Level System
 
 ```text
 Flutter Mobile App
   -> FastAPI Backend
       -> Ingestion and validation
-      -> Triage engine
+      -> Deterministic Triage Engine
       -> Contradiction and missing-data services
-      -> Action planner
-      -> Constraint checker
+      -> Action planner & Constraint checker
+      -> Optional LLM Explanation Layer (explanation phrasing, nurse-note summarization, audit reasoning)
       -> Execution simulator and recovery
       -> Outcome metrics
   -> JSON/CSV synthetic data and audit logs
@@ -123,11 +125,37 @@ Synthetic input data lives in `backend/app/data/`:
 5. Assign priority with confidence and reasoning.
 6. Generate 3 to 5 connected actions.
 7. Check resource and time constraints.
-8. Simulate execution.
-9. Recover from failure with retry or fallback.
-10. Show before/after operational outcomes.
+8. Call LLM Explanation Layer to phrase and summarize reasoning (with fallback to deterministic reasons).
+9. Simulate execution.
+10. Recover from failure with retry or fallback.
+11. Show before/after operational outcomes.
 
 ## Handoff To Flutter
 
 Phase 02 should use the model names and field names in `docs/api_contract.md`. The mobile UI can work against mock data first, then connect to the backend during Phase 06.
+
+
+
+## System Flow Diagram (Agentic Workflow)
+
+`mermaid
+graph TD
+    A[Patient Intake Data] --> B[Triage Engine]
+    B -->|Analyze Vitals & Symptoms| C[Missing Data & Contradiction Check]
+    C -->|Deterministic Rules| D{Priority Assigned?}
+    D -->|Yes| E[Action Planner]
+    D -->|Missing/Conflict| F[Manual Review Action]
+    F --> E
+    E -->|Generate Action Chain| G[Constraint Checker]
+    G -->|Validate Resources| H{Feasible?}
+    H -->|Yes| I[LLM Explanation Layer]
+    H -->|No| J[Generate Fallback]
+    J --> I
+    I -->|Acuity + Action Chain + Explanation| K[Executor Service]
+    K -->|Step 1| L{Action Success?}
+    L -->|Yes| M[Next Step...]
+    L -->|No| N[Recovery Service]
+    N -->|Retry / Fallback| K
+    M --> O[Outcome Metrics]
+`
 

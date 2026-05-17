@@ -32,6 +32,7 @@ class TriageResult(BaseModel):
     contradictions: list[Contradiction] = Field(default_factory=list)
     missing_fields: list[str] = Field(default_factory=list)
     reasoning: list[str] = Field(default_factory=list)
+    llm_explanation: str | None = Field(default=None, description="Optional LLM-assisted explanation layer output.")
     recommended_actions: list[str] = Field(default_factory=list)
     safety_disclaimer: str = (
         "Prototype decision support only. This is not a diagnosis. "

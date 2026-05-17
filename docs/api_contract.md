@@ -90,6 +90,7 @@ Example response:
     "Systolic BP is low.",
     "Severe chest pain appears with sweating and shortness of breath."
   ],
+  "llm_explanation": "Patient presents with a critical emergency triage level of RED due to severe hypotension (systolic BP 88 mmHg) and acute hypoxemia (SpO2 89%). The severe chest pain is accompanied by systemic markers (shortness of breath, sweating), indicating a possible acute coronary syndrome. IMMEDIATE CLINICIAN REVIEW IS REQUIRED.",
   "recommended_actions": [
     "validate_critical_vitals",
     "alert_clinician",
