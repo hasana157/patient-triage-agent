@@ -3,6 +3,18 @@ from app.models.action import ActionStep, ActionStatus
 from app.models.triage import TriageResult
 
 def plan_action_chain(triage_result: TriageResult) -> list[ActionStep]:
+    """
+    AGENTIC AI MODULE: Action Workflow Planner
+    
+    This function translates the analytical 'TriageResult' into a concrete operational
+    execution plan. It acts as the 'planning' phase of the agentic loop.
+    
+    Key agentic behaviors:
+    - Multi-step Planning: Generates a sequence of interconnected tasks (e.g., Alert -> Allocate -> Setup).
+    - Dependency Graphing: Uses `depends_on` to ensure actions are executed in the correct order.
+    - Fallback Generation: Pre-computes fallback actions (e.g., if 'alert_doctor' fails, use 'sms_urgent_draft').
+    - Constraint Awareness: Assigns targets and deadlines based on priority.
+    """
     actions = []
     case_id = triage_result.case_id
     

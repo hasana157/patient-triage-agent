@@ -1,11 +1,16 @@
 import json
 from pathlib import Path
-from typing import List
+from typing import List, Dict, Any
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from app.models.patient import PatientCase
 from app.models.triage import TriageResult
+from app.models.action import ActionStep
+from app.models.execution import ExecutionLog
+from app.models.outcome import OutcomeMetrics
 from app.triage_engine import evaluate_patient
+from app.planner_service import plan_action_chain
+from app.executor_service import execute_action_chain
 
 app = FastAPI(
     title="TriageFlow AI Backend",
@@ -18,7 +23,6 @@ app = FastAPI(
 
 ROOT = Path(__file__).resolve().parent
 
-
 @app.get("/")
 def root() -> dict[str, str]:
     return {
@@ -26,7 +30,6 @@ def root() -> dict[str, str]:
         "status": "ok",
         "safety": "Prototype decision support only. Clinician confirmation required.",
     }
-
 
 @app.get("/health")
 def health() -> dict[str, str]:
@@ -36,35 +39,63 @@ def health() -> dict[str, str]:
         "phase": "00-01-foundation",
     }
 
-
 @app.get("/api/demo/cases", response_model=List[PatientCase])
 def get_demo_cases():
     raw_cases = json.loads((ROOT / "data" / "demo_cases.json").read_text())
     return [PatientCase.model_validate(raw_case) for raw_case in raw_cases]
 
-
 @app.post("/api/triage/evaluate", response_model=TriageResult)
 def evaluate_triage(case: PatientCase):
     return evaluate_patient(case)
-
 
 @app.get("/api/queue", response_model=List[TriageResult])
 def get_queue():
     raw_cases = json.loads((ROOT / "data" / "demo_cases.json").read_text())
     cases = [PatientCase.model_validate(raw_case) for raw_case in raw_cases]
-    
     results = [evaluate_patient(case) for case in cases]
-    
-    # Sort logic (simplified mapping of PriorityLevel to integer for sorting)
     priority_order = {
-        "RED": 0,
-        "ORANGE": 1,
-        "MANUAL_REVIEW": 2,
-        "YELLOW": 3,
-        "GREEN": 4,
-        "BLUE": 5
+        "RED": 0, "ORANGE": 1, "MANUAL_REVIEW": 2,
+        "YELLOW": 3, "GREEN": 4, "BLUE": 5
     }
-    
     results.sort(key=lambda x: (priority_order.get(x.priority_level.value, 99), -x.risk_score))
     return results
 
+@app.post("/api/actions/plan", response_model=List[ActionStep])
+def plan_actions(triage_result: TriageResult):
+    return plan_action_chain(triage_result)
+
+@app.post("/api/actions/execute")
+def execute_actions(case_id: str, actions: List[ActionStep]):
+    final_actions, logs, outcome = execute_action_chain(case_id, actions)
+    return {
+        "actions": final_actions,
+        "logs": logs,
+        "outcome": outcome
+    }
+
+@app.get("/api/outcome")
+def get_outcome(case_id: str) -> OutcomeMetrics:
+    file_path = ROOT / "logs" / f"outcome_metrics_{case_id}.json"
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="Outcome metrics not found for case")
+    return OutcomeMetrics.model_validate_json(file_path.read_text())
+
+@app.get("/api/logs", response_model=List[ExecutionLog])
+def get_logs(case_id: str):
+    file_path = ROOT / "logs" / f"action_execution_log_{case_id}.json"
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="Logs not found for case")
+    raw_logs = json.loads(file_path.read_text())
+    return [ExecutionLog.model_validate(log) for log in raw_logs]
+
+@app.post("/api/demo/run-full")
+def run_full_demo(case: PatientCase):
+    triage_result = evaluate_patient(case)
+    actions = plan_action_chain(triage_result)
+    final_actions, logs, outcome = execute_action_chain(case.case_id, actions)
+    return {
+        "triage_result": triage_result,
+        "actions": final_actions,
+        "logs": logs,
+        "outcome": outcome
+    }

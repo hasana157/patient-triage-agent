@@ -131,3 +131,27 @@ Synthetic input data lives in `backend/app/data/`:
 
 Phase 02 should use the model names and field names in `docs/api_contract.md`. The mobile UI can work against mock data first, then connect to the backend during Phase 06.
 
+
+
+## System Flow Diagram (Agentic Workflow)
+
+`mermaid
+graph TD
+    A[Patient Intake Data] --> B[Triage Engine]
+    B -->|Analyze Vitals & Symptoms| C[Missing Data & Contradiction Check]
+    C -->|Deterministic Rules| D{Priority Assigned?}
+    D -->|Yes| E[Action Planner]
+    D -->|Missing/Conflict| F[Manual Review Action]
+    F --> E
+    E -->|Generate Action Chain| G[Constraint Checker]
+    G -->|Validate Resources| H{Feasible?}
+    H -->|Yes| I[Executor Service]
+    H -->|No| J[Generate Fallback]
+    J --> I
+    I -->|Step 1| K{Action Success?}
+    K -->|Yes| L[Next Step...]
+    K -->|No| M[Recovery Service]
+    M -->|Retry / Fallback| I
+    L --> N[Outcome Metrics]
+`
+

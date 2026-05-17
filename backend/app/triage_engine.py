@@ -7,11 +7,26 @@ from app.models.patient import PatientCase
 from app.models.triage import TriageResult, PriorityLevel
 
 def evaluate_patient(case: PatientCase) -> TriageResult:
+    """
+    AGENTIC AI MODULE: Deterministic Triage Engine
+    
+    This function acts as the core reasoning engine for the agent. Instead of relying 
+    on opaque LLM outputs, it uses a deterministic, rule-based approach to ensure 
+    medical safety and explainability.
+    
+    The reasoning process involves:
+    1. Sensory Validation: Checking for missing or stale vitals (simulating agentic perception).
+    2. Hard Red-Flag Rules: Immediate risk identification (e.g., Critical SpO2 -> RED).
+    3. Weighted Risk Scoring: Granular priority ranking for non-critical cases.
+    4. Confidence Calculation: Degrading confidence if inputs are missing or contradictory.
+    
+    Outputs an explainable TriageResult that drives the subsequent Action Planner.
+    """
     red_flags = []
     missing_fields = []
     reasoning = []
     
-    # 1. Missing fields check
+    # 1. Missing fields check (Agentic Perception & Validation)
     if case.vitals is None:
         missing_fields.append("vitals")
     else:
