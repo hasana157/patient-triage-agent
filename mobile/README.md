@@ -150,9 +150,9 @@ Click **Run Demo** on the home screen to auto-navigate:
 | 03 | Backend + Triage Engine | Member 1 | ✅ Complete |
 | 04 | Evidence Pipeline | Member 2 | ✅ Complete |
 | 05A | Action Planner + Constraints | Member 1 | ✅ Complete |
-| 05B | Executor + Recovery | Member 2 | 🔄 Next |
+| 05B | Executor + Recovery | Member 2 | ✅ Complete  |
 | 06A | Flutter Integration M1 modules | Member 1 | 🔄 Pending |
-| 06B | Flutter Integration M2 modules | Member 2 | 🔄 Pending |
+| 06B | Flutter Integration M2 modules | Member 2 |  🔄 Next |
 | 07A | Backend QA + Antigravity Artifacts | Member 1 | 🔄 Pending |
 | 07B | Flutter QA + Demo Script | Member 2 | 🔄 Pending |
 | 08 | Demo Video + Submission | Both | 🔄 Pending |
