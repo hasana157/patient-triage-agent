@@ -1,156 +1,105 @@
 # TriageFlow AI — Patient Triage Agent
-### Hospital-Grade Agentic Clinical Decision Support Prototype
-> **⚠️ Clinical Safety Disclaimer:** This is an academic and hackathon prototype designed as a supervised decision-support tool. It does not diagnose disease, prescribe treatment, or replace the professional judgment of a licensed healthcare provider. **Not for clinical deployment.**
+
+**TriageFlow AI** is a mobile-first decision-support prototype built to help emergency department staff triage patients quickly and consistently. It takes patient information (demographics, vital signs, symptoms, nurse notes, and history) and automatically:
+1. Calculates a clinical urgency priority (Red, Orange, Yellow, Green, or Blue).
+2. Detects clinical contradictions and missing vital data.
+3. Generates a multi-step care plan to help guide patient care.
+4. Checks resources (like beds and doctors) to adjust the plan when things are busy.
+5. Simulates how these actions are executed, showing how to recover if a system or notification fails.
+
+> **🏥 Medical Safety Note:** This tool is for decision support only. It does not diagnose, treat, or replace the judgment of a licensed doctor or nurse.
 
 ---
 
-## 🏥 Project Overview
-**TriageFlow AI** is a state-of-the-art, mobile-first, agentic decision-support prototype built to optimize emergency department triage operations. It translates multi-source patient inputs (demographics, vital signs, primary symptoms, written nurse notes, and historical data) into:
-1. **Clinical Triage Classification** (Red, Orange, Yellow, Green, Blue urgency priority).
-2. **Missing & Contradictory Data Resolution** (Safety-first discrepancy detection).
-3. **Multi-Step Action Chaining** (Dynamic operational sequences aligned to triage categories).
-4. **Constraint-Aware Alternatives** (Resource and waiting-room pressure adjustments).
-5. **Self-Healing Simulation** (Autonomous failure recovery, retries, and local offline fallbacks).
-6. **Measurable Outcomes** (Before-and-after projections of wait times and emergency queue positioning).
+## 🛠️ How It Works (The Core Agent Flow)
 
-By combining a **deterministic, safety-locked scoring core** with a **flexible LLM-based explanation layer**, TriageFlow AI provides emergency clinicians with transparent, explainable, and fully auditable triage logic.
+The system operates in a simple, step-by-step loop every time a patient case is evaluated:
+
+1. **Ingest & Validate:** The user enters the patient's data in the mobile app.
+2. **Safety Screen:** The backend analyzes the vital signs. If any critical vital threshold is crossed (like extremely low oxygen), it instantly assigns a high priority (Red/Orange) to protect the patient.
+3. **Resolve Discrepancies:** The pipeline checks for contradictory inputs (for example, if a patient reports "severe chest pain" but has perfect, relaxed vitals).
+4. **Action Planning:** A multi-step care plan is created (such as: Alert Doctor ➡️ Allocate Bed ➡️ Prepare Oxygen).
+5. **Constraint Check:** The plan checks if resources are actually available. If a bed or doctor is unavailable, the plan automatically switches to a fallback action.
+6. **Execution Simulation:** The system simulates performing the actions, handles simulated network failures, retries, and records the final outcome.
 
 ---
 
-## 🏗️ System Architecture & Data Flow
+## 🏗️ System Architecture
 
-TriageFlow AI uses a hybrid, multi-tier architecture consisting of a **FastAPI backend** (clinical decision-engine) and a **Flutter web client** (hospital operations dashboard), orchestrated by Google Antigravity.
+TriageFlow AI consists of two main parts: a **Flutter Mobile App** (Frontend) and a **FastAPI Server** (Backend). Here is a clean and simple view of how data flows between them:
 
 ```mermaid
 graph TD
-    A[Clinician Input / Intake Form] -->|JSON Case Payload| B[FastAPI Backend /app/main.py]
-    B --> C[Triage Evaluation Engine]
-    C -->|Vitals & Symptoms| C1[Hard Red-Flag Rules]
-    C -->|Scoring Algorithm| C2[Weighted Risk Calculator]
+    %% Define clean styles
+    classDef default fill:#F9FBFD,stroke:#334E68,stroke-width:1px,color:#102A43;
+    classDef highlight fill:#EBF4FF,stroke:#2B6CB0,stroke-width:2px,color:#2B6CB0;
     
-    B --> D[Clinical Evidence Pipeline]
-    D --> D1[Contradiction Detector]
-    D --> D2[Missing & Stale Data Service]
+    A[1. Patient Intake Form] -->|Submits JSON Case Data| B[2. FastAPI Backend Server]
     
-    B --> E[Action Planner & Constraints]
-    E --> E1[Multi-Step Chaining Engine]
-    E --> E2[Resource Constraint Filter]
+    subgraph "Core Evaluation Engine"
+        B --> C[3. Triage Urgency Engine]
+        C -->|Check Vitals| C1[Hard Red-Flag Rules]
+        C -->|Weighted Math| C2[Scoring Algorithm]
+    end
     
-    B --> F[LLM Explanation Layer]
-    F -->|Secure Prompting| F1[Reasoning Summarizer]
+    subgraph "Safety Check & Discrepancies"
+        B --> D[4. Contradiction Service]
+        D -->|Compare Vitals vs Notes| D1[Discrepancy Alarm]
+        D -->|Check Vitals Freshness| D2[Missing/Stale Vitals Check]
+    end
     
-    C & D & E & F -->|Fully Evaluated Case State| G[Simulation Executor]
-    G --> G1[State Machine Transitions]
-    G --> G2[Self-Healing Recovery & Retries]
-    G --> G3[Outcome Projection Dashboard]
+    subgraph "Planning & Simulation Engine"
+        B --> E[5. Action Planner & Constraints]
+        E -->|Check Beds/Doctors| E1[Resource Constraint Checker]
+        
+        B --> F[6. Step-by-Step Executor]
+        F -->|Simulate Failures| F1[Self-Healing Recovery & Retries]
+        F -->|Project Wait Times| F2[Outcome Dashboard]
+    end
     
-    G -->|Triage Result + Action Plan + Audit Trace| H[Flutter Dashboard UI]
+    B --> G[7. LLM Explanation Layer]
+    
+    G -->|Dynamic Reasoning Summary| H[8. Clinical Dashboard UI]
+    C2 & D1 & E1 & F1 & F2 --> H
+    
+    class A,H highlight;
 ```
-
-### 1. Ingestion & Hard-Flag Rule Engine
-Patient data is ingested as a structured `PatientCase`. Urgency is determined using a **hybrid logic gate**:
-* **Deterministic Gate (Hard Safety Rules):** A battery of critical vital thresholds (e.g., $SpO_2 < 90\%$, Systolic BP $< 90\text{ mmHg}$, or severe central chest pain) bypasses average scores to immediately lock the patient into a **RED** or **ORANGE** priority. This prevents critical cases from being averaged down.
-* **Weighted Score:** If no hard rules are triggered, the engine calculates a granular risk index ranging from `0.0` to `1.0` based on:
-  $$\text{Risk Score} = 0.35 \times V_{\text{risk}} + 0.25 \times S_{\text{risk}} + 0.15 \times P_{\text{vulnerable}} + 0.10 \times D_{\text{pain}} + 0.10 \times W_{\text{wait}} + 0.05 \times R_{\text{pressure}}$$
-
-### 2. Clinical Evidence Pipeline (`contradiction_service.py`)
-To prevent clinician error, the agent passes the case through a safety pipeline:
-* **Contradiction Detection:** Scans for operational mismatches (e.g., a high pain score of `9/10` reported alongside completely normal, relaxed vitals, or a documented primary complaint of "difficulty breathing" paired with normal respiratory rates).
-* **Missing & Stale Data Auditing:** Calculates vital signal freshness using timestamp comparison. If critical telemetry is absent, it applies a confidence penalty, dropping the overall evaluation confidence score.
 
 ---
 
-## 🤖 The Agentic AI Loop (Content-to-Action)
+## 🧠 The LLM Explanation Layer
 
-The core strength of TriageFlow AI is its **Autonomous Content-to-Action Agentic Loop** which runs whenever a patient case is triaged:
+To make clinical reasoning easy to understand, TriageFlow AI includes an **Explanation-Only LLM Layer**:
 
-```
-[Observe] Ingest Case, Vitals, and History
-   ↓
-[Orient] Detect Contradictions & Audit Freshness
-   ↓
-[Decide] Lock Urgency Level & Risk Index Deterministically
-   ↓
-[Plan]   Generate 3-5 Step Action Chain & Resolve Bed/Staff Constraints
-   ↓
-[Act]    Simulate Execution & Trace State Changes Step-by-Step
-   ↓
-[Recover] Auto-Retry Failed Pagers & Trigger Local Queue Fallbacks
-   ↓
-[Verify] Compare Before/After Outcome Metrics & Write Audit Logs
-```
-
-### 1. The Planning Phase (`planner_service.py`)
-Translates analytical data into a sequence of operational instructions.
-* For **RED/Critical** cases, it plans an emergency sequence: *Alert Emergency Doctor* ➡️ *Allocate Resus Bed* ➡️ *Setup Oxygen*.
-* If vital telemetry is missing, it injects manual clinical validation tasks (*Request Missing Vitals/Clarification*) and schedules priority reviews.
-
-### 2. Operational Constraint Filtering (`constraint_service.py`)
-Validates the feasibility of the plan against current hospital resource matrices (`resources.json`, `queue.csv`). 
-* If a resus bed is constrained (0 available beds), the checker automatically modifies the task chain, generating a designated fallback action (e.g. *Escalate to Ward Charge Nurse*) to clear the operational block.
-
-### 3. Step-by-Step Execution Simulator (`executor_service.py`)
-Simulates acting upon the physical world. Each action transitions through state changes:
-$$\text{STARTED} \longrightarrow \text{RUNNING} \longrightarrow \text{SUCCEEDED} \ /\  \text{FAILED} \longrightarrow \text{RECOVERED}$$
-
-### 4. Self-Healing Recovery (`recovery_service.py`)
-The system intentionally forces a doctor pager network connection failure during the simulation. 
-* The system attempts to retry the notification.
-* If retries fail, the recovery service automatically triggers the task's pre-computed fallback action—generating an urgent, pre-formatted local SMS draft for secondary nursing staff—marking the task as `RECOVERED` without failing the workflow.
+* **Safety Boundary:** The LLM is never used to decide the patient's triage priority, calculate scores, or choose safety-critical actions. All clinical logic is entirely handled by deterministic Python code.
+* **Friendly Phrasing:** The LLM receives the final calculated results (such as priority level and vital details) and rewrites them into a friendly, plain-English summary of the clinical reasoning, explaining the vitals and simplifying the nurse's shorthand notes.
+* **Reliability Fallback:** If the LLM service times out or is offline, the backend automatically bypasses the LLM and returns the core clinical reasoning calculated by the system, ensuring the application never crashes.
 
 ---
 
-## 🧠 The LLM Explanation & Summarization Layer (`explanation_service.py`)
-To keep reasoning highly transparent, TriageFlow AI includes an **Explanation-Only LLM Layer** designed with strict safety boundaries:
+## 👥 Project Team & Division of Work
 
-```
-┌────────────────────────────────────────────────────────┐
-│               DETERMINISTIC CLINICAL CORE              │
-│  (Calculates Urgency, Risk Index, Vitals, Actions)     │
-└───────────────────────────┬────────────────────────────┘
-                            │ (Outputs deterministic structure only)
-                            ▼
-┌────────────────────────────────────────────────────────┐
-│               LLM EXPLANATION LAYER                    │
-│      (Generates reasoning summary & phrasing)          │
-└───────────────────────────┬────────────────────────────┘
-                            │ (Does NOT make safety-critical decisions)
-                            ▼
-┌────────────────────────────────────────────────────────┐
-│              CLINICAL DASHBOARD / AUDIT                │
-└────────────────────────────────────────────────────────┘
-```
+The project was built by a two-member team with equal contributions:
 
-* **No LLM Triage Decision-Making:** To ensure clinical safety, LLMs are never used in the primary path to calculate priority levels, identify red flags, or determine urgency.
-* **Explanation Phrasing:** The LLM receives the **fully processed output** of the deterministic backend and is instructed to summarize the clinical reasoning, synthesize the nurse's shorthand notes, and format a human-readable case overview.
-* **Total Fallback Protection:** If the LLM provider fails, times out, or returns invalid outputs, the API automatically bypasses it and returns the deterministic reasoning array calculated by the core engine, guaranteeing that the application is always reliable and functional.
+### 👨‍💻 Hasana Zahid — Backend & Clinical Systems
+Hasana developed the backend API server, clinical decision engine, and the planning algorithms:
+* **FastAPI Server:** Created the entire web server setup, standard error handlers, and API routing.
+* **Triage Urgency Engine (`triage_engine.py`):** Programmed the red-flag clinical safety checks and the weighted scoring mathematics.
+* **Action Chain Planner (`planner_service.py` & `constraint_service.py`):** Wrote the algorithm that creates steps for patient care and checks resource availability (beds and doctors) to swap in fallback tasks.
+* **LLM Explanation Service (`explanation_service.py`):** Integrated the generative reasoning summary prompts and built the connection-failure safeguards.
+* **Backend QA Testing:** Built the backend testing suite with 14 automated integration tests to ensure that all priority paths evaluate correctly.
+
+### 👨‍💻 Dur-e-Shahwar — Frontend UI & Recovery Systems
+Dur-e-Shahwar built the Flutter application, visual dashboard interfaces, and the failure-recovery engine:
+* **Flutter Mobile Application:** Designed the entire clinical portal layout, screen transitions, and custom widgets (like priority badges, vitals cards, and symptoms selectors).
+* **Evidence Pipeline (`contradiction_service.py`):** Built the service that catches input errors, vital signal conflicts, and stale vital warnings.
+* **Action Simulator (`executor_service.py`):** Programmed the step-by-step action simulation tracker that updates task states in real-time.
+* **Self-Healing Recovery (`recovery_service.py`):** Built the logic that automatically retries failed tasks, and redirects to offline local fallbacks (like draft emergency SMS text generation) if a network alert fails.
+* **Frontend QA & Polish:** Tested the app layout, resolved minor viewport layout height overflows to prevent rendering warnings, and polished styling and typography using Google Fonts.
 
 ---
 
-## 👥 Two-Member Technical Contribution (Equal Ownership)
-
-The project was executed in perfect alignment with **SRS v2.0**, dividing equal workloads in lines of code, algorithmic complexity, and user-facing value:
-
-### 👨‍💻 Member 01: Hasan (@hasana157) — Backend & Agent Architect
-Hasan designed the core data engines, API interfaces, and deterministic clinical pathways:
-* **FastAPI Backend Architecture:** Created the FastAPI web server, CORS configurations, standard exception handlers, and routing interfaces in `main.py`.
-* **Deterministic Triage Engine (`triage_engine.py`):** Coded the clinical rule evaluators, hard red-flag checks (RF-001 through RF-007), and mathematical weighted scoring systems.
-* **Action Planner & Constraint Service (`planner_service.py` & `constraint_service.py`):** Wrote the directed workflow planning engine, resource availability validators, and fallback action generators.
-* **LLM Explanation Service (`explanation_service.py`):** Integrated the explanation-only generative AI reasoning engine, structured clinical prompts, and LLM connection timeout fallbacks.
-* **Backend QA and Golden Suite:** Authored the complete `pytest` test suite containing 14 rigorous, green-verified integration test cases covering golden cases (CASE-001 to CASE-005).
-* **Antigravity Artifact Integration:** Documented the API specifications, cost/latency sheets, and architectural plans.
-
-### 👨‍💻 Member 02: Shahwar (@sahhwar) — Frontend & Recovery Engineer
-Shahwar designed the Flutter UI client, contradiction trackers, and self-healing executors:
-* **Hospital-Grade Flutter Web Application:** Created the entire responsive, color-coded clinical dashboard dashboard, custom badge widgets (`PriorityBadge`, `VitalsInputCard`, `SymptomChipSelector`), and transitions.
-* **Clinical Evidence Pipeline (`contradiction_service.py`):** Authored the logical contradiction analyzer, mismatch validators, and stale vital timestamp freshness filters.
-* **Execution Simulation Engine (`executor_service.py`):** Built the step-by-step simulator, tracking real-world state transitions and outputting clean JSON logs.
-* **Self-Healing Recovery Engine (`recovery_service.py`):** Programmed the recovery handlers, self-correcting retry behaviors, and offline local communication failovers.
-* **Frontend Manual QA & Layout Polish:** Debugged layout structures, resolved critical viewport vertical height overflows, and unified styling to use standardized Google Fonts.
-
----
-
-## 🛠️ Installation & Execution Commands
+## 🛠️ How to Run
 
 ### 1. Backend Server Setup
 From the `backend/` directory:
@@ -159,16 +108,16 @@ From the `backend/` directory:
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 
-# Install requirements and boot local server
+# Install requirements and boot server
 pip install -r requirements.txt
 uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
 ```
 
-### 2. Mobile Frontend Setup
+### 2. Mobile App Setup
 From the `mobile/` directory:
 ```powershell
-# Get dependencies and run Flutter Web
+# Fetch packages and run Flutter Web
 flutter pub get
 flutter run -d web-server --web-port 8080 --web-hostname 127.0.0.1
 ```
-Open **`http://127.0.0.1:8080/`** to interact with the clinical portal.
+Open **`http://127.0.0.1:8080/`** in your browser to view the application.
