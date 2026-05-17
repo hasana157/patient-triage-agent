@@ -10,7 +10,7 @@ from app.recovery_service import handle_failure
 
 ROOT = Path(__file__).resolve().parent
 
-def execute_action_chain(case_id: str, actions: list[ActionStep], initial_wait: int = 120, force_fail_first_alert: bool = True):
+def execute_action_chain(case_id: str, actions: list[ActionStep], initial_wait: int = 120, force_fail_first_alert: bool = True, contradictions: list[dict] = None):
     """
     AGENTIC AI MODULE: Execution Simulator
     
@@ -24,8 +24,26 @@ def execute_action_chain(case_id: str, actions: list[ActionStep], initial_wait: 
     resources = load_resources()
     logs = []
     
+    from app.services.contradiction_service import ContradictionService
+    contradiction_service = ContradictionService()
+    
+    if contradictions is not None and any(c.get("severity") == "high" for c in contradictions):
+        logs.append(ExecutionLog(
+            log_id=str(uuid.uuid4()), case_id=case_id, action_id="system",
+            event_type="contradiction_warning", status=ExecutionStatus.INFO,
+            message="High severity contradictions detected — execution proceeding with elevated caution. Clinician verification required."
+        ))
+
     # Check if force fail is requested
     force_fail = force_fail_first_alert and resources.get("constraints", {}).get("force_first_doctor_alert_failure", True)
+    
+    if contradictions is not None and any(c.get("type") == "vitals_deterioration" for c in contradictions):
+        force_fail = True
+        logs.append(ExecutionLog(
+            log_id=str(uuid.uuid4()), case_id=case_id, action_id="system",
+            event_type="contradiction_warning", status=ExecutionStatus.INFO,
+            message="Vitals deterioration detected — forcing alert verification step."
+        ))
     
     first_alert_failed = False
     alerts_sent = 0

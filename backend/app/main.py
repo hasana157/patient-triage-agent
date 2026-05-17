@@ -3,6 +3,8 @@ from pathlib import Path
 from typing import List, Dict, Any
 
 from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+
 from app.models.patient import PatientCase
 from app.models.triage import TriageResult
 from app.models.action import ActionStep
@@ -15,6 +17,12 @@ from app.services.contradiction_service import ContradictionService
 from app.services.missing_data_service import MissingDataService
 
 from fastapi.middleware.cors import CORSMiddleware
+
+class ExecuteRequest(BaseModel):
+    case_id: str
+    actions: List[ActionStep]
+    contradictions: List[dict] = []
+
 
 app = FastAPI(
     title="TriageFlow AI Backend",
@@ -77,12 +85,16 @@ def plan_actions(triage_result: TriageResult):
     return plan_action_chain(triage_result)
 
 @app.post("/api/actions/execute")
-def execute_actions(case_id: str, actions: List[ActionStep]):
-    final_actions, logs, outcome = execute_action_chain(case_id, actions)
+def execute_actions(request: ExecuteRequest):
+    final_actions, logs, outcome = execute_action_chain(
+        request.case_id,
+        request.actions,
+        contradictions=request.contradictions
+    )
     return {
-        "actions": final_actions,
-        "logs": logs,
-        "outcome": outcome
+        "actions": [a.model_dump(mode="json") for a in final_actions],
+        "logs": [l.model_dump(mode="json") for l in logs],
+        "outcome": outcome.model_dump(mode="json")
     }
 
 @app.get("/api/outcome")
