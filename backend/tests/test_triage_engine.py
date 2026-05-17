@@ -48,8 +48,10 @@ def test_triage_engine_rules():
             # Chest pain, critical vitals expected RED
             assert res.priority_level == "RED"
         elif case.case_id == "CASE-002":
-            # Contradiction case expected MANUAL_REVIEW
-            assert res.priority_level == "MANUAL_REVIEW"
+            # SpO2=88 (Critical), resp_rate=30 (Critical), wheezing → RED
+            # Contradictions are detected but do not override priority
+            assert res.priority_level == "RED"
+            assert len(res.contradictions) > 0
         elif case.case_id == "CASE-003":
             # High fever and lethargy in child -> Altered consciousness expected RED
             assert res.priority_level == "RED"

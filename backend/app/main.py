@@ -11,6 +11,8 @@ from app.models.outcome import OutcomeMetrics
 from app.triage_engine import evaluate_patient
 from app.planner_service import plan_action_chain
 from app.executor_service import execute_action_chain
+from app.services.contradiction_service import ContradictionService
+from app.services.missing_data_service import MissingDataService
 
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -26,7 +28,7 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -97,6 +99,28 @@ def get_logs(case_id: str):
         raise HTTPException(status_code=404, detail="Logs not found for case")
     raw_logs = json.loads(file_path.read_text())
     return [ExecutionLog.model_validate(log) for log in raw_logs]
+
+@app.post("/api/contradictions/detect")
+def detect_contradictions(case: PatientCase):
+    """Run the evidence pipeline independently of triage evaluation."""
+    contradiction_svc = ContradictionService()
+    missing_data_svc = MissingDataService()
+
+    contradictions = contradiction_svc.detect_contradictions(case)
+    stale_warnings = contradiction_svc.detect_stale_vitals(case)
+    missing_fields = missing_data_svc.detect_missing_fields(case)
+    data_quality = missing_data_svc.assess_data_quality(case)
+    confidence_penalty = contradiction_svc.calculate_confidence_penalty(
+        contradictions, missing_fields
+    )
+
+    return {
+        "contradictions": contradictions,
+        "stale_warnings": stale_warnings,
+        "missing_fields": missing_fields,
+        "data_quality": data_quality,
+        "confidence_penalty": round(confidence_penalty, 2),
+    }
 
 @app.post("/api/demo/run-full")
 def run_full_demo(case: PatientCase):

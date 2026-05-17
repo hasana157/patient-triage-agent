@@ -5,6 +5,8 @@ from pathlib import Path
 
 from app.models.patient import PatientCase
 from app.models.triage import TriageResult, PriorityLevel
+from app.services.contradiction_service import ContradictionService
+from app.services.missing_data_service import MissingDataService
 
 def evaluate_patient(case: PatientCase) -> TriageResult:
     """
@@ -23,27 +25,14 @@ def evaluate_patient(case: PatientCase) -> TriageResult:
     Outputs an explainable TriageResult that drives the subsequent Action Planner.
     """
     red_flags = []
-    missing_fields = []
     reasoning = []
-    
+
+    # Instantiate evidence pipeline services
+    contradiction_service = ContradictionService()
+    missing_data_service = MissingDataService()
+
     # 1. Missing fields check (Agentic Perception & Validation)
-    if case.vitals is None:
-        missing_fields.append("vitals")
-    else:
-        if case.vitals.heart_rate is None:
-            missing_fields.append("heart_rate")
-        if case.vitals.systolic_bp is None:
-            missing_fields.append("systolic_bp")
-        if case.vitals.diastolic_bp is None:
-            missing_fields.append("diastolic_bp")
-        if case.vitals.respiratory_rate is None:
-            missing_fields.append("respiratory_rate")
-        if case.vitals.spo2 is None:
-            missing_fields.append("spo2")
-        if case.vitals.temperature_c is None:
-            missing_fields.append("temperature_c")
-        if case.vitals.consciousness is None:
-            missing_fields.append("consciousness")
+    missing_fields = missing_data_service.detect_missing_fields(case)
 
     # 2. Hard Red-Flag Rules (Deterministic)
     priority_level = PriorityLevel.GREEN
@@ -97,11 +86,16 @@ def evaluate_patient(case: PatientCase) -> TriageResult:
             priority_level = PriorityLevel.GREEN
             reasoning.append("Standard presentation, no immediate risk (GREEN).")
 
-    # Special edge case handling for demo
-    if case.case_id == "CASE-002":
-        # Contradiction: wheezing but says no breathing problem
-        reasoning.append("Contradiction identified in respiratory status.")
-        priority_level = PriorityLevel.MANUAL_REVIEW
+    # Evidence pipeline — contradiction detection (replaces hardcoded CASE-002 hack)
+    contradictions = contradiction_service.detect_contradictions(case)
+    stale_warnings = contradiction_service.detect_stale_vitals(case)
+
+    if contradictions:
+        reasoning.append(f"Identified {len(contradictions)} data contradiction(s) — confidence reduced.")
+        for c in contradictions:
+            reasoning.append(f"  [{c['severity'].upper()}] {c['conflict_type']}: {c['resolution_action']}")
+    if stale_warnings:
+        reasoning.extend(stale_warnings)
 
     # 3. Weighted Risk Score
     risk_score = 0.0
@@ -125,9 +119,12 @@ def evaluate_patient(case: PatientCase) -> TriageResult:
         confidence -= 0.1 * len(missing_fields)
     if "vitals" in missing_fields or len(missing_fields) >= 3:
         confidence -= 0.4
-    if case.case_id == "CASE-002":
-        confidence -= 0.3 # Contradiction lowers confidence
-    confidence = max(0.1, confidence)
+
+    # Apply evidence pipeline confidence penalty
+    confidence_penalty = contradiction_service.calculate_confidence_penalty(
+        contradictions, missing_fields
+    )
+    confidence = max(0.1, confidence - confidence_penalty)
 
     result = TriageResult(
         case_id=case.case_id,
@@ -136,7 +133,7 @@ def evaluate_patient(case: PatientCase) -> TriageResult:
         risk_score=round(risk_score, 2),
         confidence=round(confidence, 2),
         red_flags=red_flags,
-        contradictions=[], # To be filled in Phase 4
+        contradictions=contradictions,
         missing_fields=missing_fields,
         reasoning=reasoning,
         recommended_actions=[],
