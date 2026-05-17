@@ -75,11 +75,39 @@ To make clinical reasoning easy to understand, TriageFlow AI includes an **Expla
 * **Friendly Phrasing:** The LLM receives the final calculated results (such as priority level and vital details) and rewrites them into a friendly, plain-English summary of the clinical reasoning, explaining the vitals and simplifying the nurse's shorthand notes.
 * **Reliability Fallback:** If the LLM service times out or is offline, the backend automatically bypasses the LLM and returns the core clinical reasoning calculated by the system, ensuring the application never crashes.
 
+### 🔑 How to Enable Live LLM Integration (API Key Setup)
+By default, the application runs locally using smart pre-compiled explanation templates to ensure zero latency and offline capability. If you wish to connect a live LLM model:
+1. Create a `.env` file in the root directory of the project (or in the `backend/` directory) if it doesn't already exist.
+2. Add your LLM provider API key to the environment variables:
+   ```env
+   # Add your Gemini API Key
+   GEMINI_API_KEY=your_actual_api_key_here
+
+   # Or add your OpenAI API Key (depending on configuration)
+   OPENAI_API_KEY=your_actual_api_key_here
+   ```
+3. Restart the FastAPI backend server. The system will automatically detect the key and switch from local templating to live LLM generation, with automatic fallback protection active in case of API failure or network timeout.
+
 ---
 
 ## 👥 Project Team & Division of Work
 
-The project was built by a two-member team with equal contributions:
+The project was built by a two-member team with equal contributions, dividing the core agentic decision-and-action loops right down the middle:
+
+### 🧠 The Agentic AI Workload Split (50/50)
+
+| Phase of Agentic Loop | Component | Technical Owner | Why it is "Agentic AI" |
+| :--- | :--- | :--- | :--- |
+| **Think & Plan** | **Triage Urgency Engine** | 👩‍💻 **Hasana Zahid** | Translates raw vital telemetry and text note signals into clinical priority scores using hard rules and scoring logic. |
+| **Think & Plan** | **Action Planner** | 👩‍💻 **Hasana Zahid** | Automatically designs a dynamic 3–5 step sequence of emergency operations tailored to the patient's condition. |
+| **Think & Plan** | **Resource Constraints** | 👩‍💻 **Hasana Zahid** | Analyzes external environment data (bed/doctor matrices) and dynamically rewires plans to use fallbacks when resources are blocked. |
+| **Think & Plan** | **LLM Explanation Layer** | 👩‍💻 **Hasana Zahid** | Secures prompt formatting and summarizes written clinician intake notes to make the agent's logic transparent. |
+| **Act & Recover** | **Evidence Pipeline** | 👩‍💻 **Dur-e-Shahwar** | Scans for clinical anomalies (contradictions between vitals vs notes) and audits vital signal staleness to penalize agent confidence. |
+| **Act & Recover** | **Simulation State Machine**| 👩‍💻 **Dur-e-Shahwar** | Directs the step-by-step physical execution of the action plan, managing state changes (`STARTED` ➡️ `RUNNING` ➡️ `SUCCEEDED` / `FAILED`). |
+| **Act & Recover** | **Self-Healing Recovery** | 👩‍💻 **Dur-e-Shahwar** | Captures execution failures (like pager network timeouts), manages retry loops, and activates secondary backup protocols (like generating emergency local SMS drafts). |
+| **Act & Recover** | **Outcome Analytics** | 👩‍💻 **Dur-e-Shahwar** | Calculates wait time changes and queue status changes to measure and prove the agent's operational success. |
+
+---
 
 ### 👨‍💻 Hasana Zahid — Backend & Clinical Systems
 Hasana developed the backend API server, clinical decision engine, and the planning algorithms:
