@@ -1,5 +1,6 @@
 /// Dart data models mirroring backend Pydantic models.
 /// These use the same field names as the API contract.
+library;
 
 class Vitals {
   final int? heartRate;

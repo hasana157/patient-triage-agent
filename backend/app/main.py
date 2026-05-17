@@ -6,6 +6,7 @@ from fastapi import FastAPI
 from app.models.patient import PatientCase
 from app.models.triage import TriageResult
 from app.triage_engine import evaluate_patient
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(
     title="TriageFlow AI Backend",
@@ -14,6 +15,14 @@ app = FastAPI(
         "Synthetic emergency triage decision-support prototype. "
         "Not for diagnosis or real clinical deployment."
     ),
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 ROOT = Path(__file__).resolve().parent

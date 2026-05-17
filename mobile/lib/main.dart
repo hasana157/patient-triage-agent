@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'theme/app_theme.dart';
+import 'screens/home_screen.dart';
+import 'screens/patient_intake_screen.dart';
 
 void main() {
   runApp(const TriageFlowApp());
@@ -12,12 +15,15 @@ class TriageFlowApp extends StatelessWidget {
     return MaterialApp(
       title: 'TriageFlow AI',
       debugShowCheckedModeBanner: false,
-      home: Scaffold(
-        appBar: AppBar(title: const Text('TriageFlow AI - Phase 0')),
-        body: const Center(
-          child: Text('Awaiting Phase 2 implementation...'),
-        ),
-      ),
+      theme: AppTheme.lightTheme,
+      home: const HomeScreen(),
+      // Named routes for dataless screens only.
+      // Data-carrying screens (TriageResultScreen, ActionChainScreen,
+      // ExecutionSimulationScreen) use Navigator.push with constructor injection.
+      routes: {
+        '/home': (_) => const HomeScreen(),
+        '/intake': (_) => const PatientIntakeScreen(),
+      },
     );
   }
 }

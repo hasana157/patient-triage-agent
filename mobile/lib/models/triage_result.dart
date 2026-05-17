@@ -36,6 +36,7 @@ class TriageResult {
   final List<String> reasoning;
   final List<String> recommendedActions;
   final String safetyDisclaimer;
+  final String? llmExplanation;
 
   const TriageResult({
     required this.caseId,
@@ -51,6 +52,7 @@ class TriageResult {
     this.safetyDisclaimer =
         'Prototype decision support only. This is not a diagnosis. '
             'A licensed clinician must confirm or override the priority.',
+    this.llmExplanation,
   });
 
   factory TriageResult.fromJson(Map<String, dynamic> json) {
@@ -84,6 +86,7 @@ class TriageResult {
       safetyDisclaimer: json['safety_disclaimer'] as String? ??
           'Prototype decision support only. This is not a diagnosis. '
               'A licensed clinician must confirm or override the priority.',
+      llmExplanation: json['llm_explanation'] as String?,
     );
   }
 }
